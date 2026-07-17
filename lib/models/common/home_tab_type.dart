@@ -8,6 +8,10 @@ import 'package:PiliPlus/pages/pgc/controller.dart';
 import 'package:PiliPlus/pages/pgc/view.dart';
 import 'package:PiliPlus/pages/rank/controller.dart';
 import 'package:PiliPlus/pages/rank/view.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/pages/offline_rcmd/controller.dart';
+import 'package:PiliPlus/pages/offline_rcmd/view.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/pages/rcmd/controller.dart';
 import 'package:PiliPlus/pages/rcmd/view.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +24,10 @@ enum HomeTabType implements EnumWithLabel {
   rank('分区'),
   bangumi('番剧'),
   cinema('影视'),
+  // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+  // 必须追加在末尾：tabBarSort 按枚举下标持久化，插中间会错位已有配置
+  offlineRcmd('怀旧推荐'),
+  // === OFFLINE-NOSTALGIA-MODE END ===
   ;
 
   @override
@@ -33,6 +41,9 @@ enum HomeTabType implements EnumWithLabel {
     HomeTabType.rank => Get.find<RankController>,
     HomeTabType.bangumi ||
     HomeTabType.cinema => () => Get.find<PgcController>(tag: name),
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    HomeTabType.offlineRcmd => Get.find<OfflineRcmdController>,
+    // === OFFLINE-NOSTALGIA-MODE END ===
   };
 
   Widget get page => switch (this) {
@@ -42,5 +53,8 @@ enum HomeTabType implements EnumWithLabel {
     HomeTabType.rank => const RankPage(),
     HomeTabType.bangumi => const PgcPage(tabType: HomeTabType.bangumi),
     HomeTabType.cinema => const PgcPage(tabType: HomeTabType.cinema),
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    HomeTabType.offlineRcmd => const OfflineRcmdPage(),
+    // === OFFLINE-NOSTALGIA-MODE END ===
   };
 }

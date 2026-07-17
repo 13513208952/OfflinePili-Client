@@ -57,6 +57,9 @@ import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/extension/nested_scroll_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
@@ -758,16 +761,22 @@ class VideoDetailController extends GetxController
     if (isClosed) return;
 
     if (!isFileSource) {
-      if (plPlayerController.enableBlock) {
-        initSkip();
-      }
+      // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+      // 怀旧模式：字幕/看点(playInfo)、弹幕趋势图是B站云端接口，
+      // SponsorBlock是第三方服务——都会泄露归档视频的观看行为，全部跳过。
+      if (!OfflineConfig.enabled) {
+        // === OFFLINE-NOSTALGIA-MODE END ===
+        if (plPlayerController.enableBlock) {
+          initSkip();
+        }
 
-      if (vttSubtitlesIndex.value == -1) {
-        _queryPlayInfo();
-      }
+        if (vttSubtitlesIndex.value == -1) {
+          _queryPlayInfo();
+        }
 
-      if (plPlayerController.showDmChart && dmTrend.value == null) {
-        _getDmTrend();
+        if (plPlayerController.showDmChart && dmTrend.value == null) {
+          _getDmTrend();
+        }
       }
     }
 
@@ -803,9 +812,13 @@ class VideoDetailController extends GetxController
       return;
     }
     isQuerying = true;
-    if (plPlayerController.enableSponsorBlock && isBlock && !fromReset) {
-      querySponsorBlock(bvid: bvid, cid: cid.value);
-    }
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // SponsorBlock 会把 bvid 发给第三方服务，怀旧模式下不查
+    if (!OfflineConfig.enabled)
+      // === OFFLINE-NOSTALGIA-MODE END ===
+      if (plPlayerController.enableSponsorBlock && isBlock && !fromReset) {
+        querySponsorBlock(bvid: bvid, cid: cid.value);
+      }
     if (plPlayerController.cacheVideoQa == null) {
       final isWiFi = await ConnectivityUtils.isWiFi;
       plPlayerController
@@ -1532,6 +1545,13 @@ class VideoDetailController extends GetxController
 
   @pragma('vm:notify-debugger-on-exception')
   Future<void> onCast() async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 投屏走的是B站TV播放地址接口，怀旧模式下不可用
+    if (OfflineConfig.enabled) {
+      SmartDialog.showToast('单机怀旧模式暂不支持投屏');
+      return;
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     SmartDialog.showLoading();
     final res = await VideoHttp.tvPlayUrl(
       cid: cid.value,

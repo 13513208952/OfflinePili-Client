@@ -29,6 +29,10 @@ import 'package:PiliPlus/pages/video/reply/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/utils/offline/local_interactions.dart';
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/utils/device_utils.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
@@ -143,6 +147,10 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
 
   // 获取up主粉丝数
   Future<void> queryUserStat(List<Staff>? staff) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式：UP主粉丝数/合作成员关注状态是B站云端数据，不查，区块留空。
+    if (OfflineConfig.enabled) return;
+    // === OFFLINE-NOSTALGIA-MODE END ===
     if (staff != null && staff.isNotEmpty) {
       final res = await Request().get(
         Api.relations,
@@ -164,6 +172,17 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
   }
 
   Future<void> queryAllStatus() async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式下点赞/投币/收藏状态完全来自本地记录，不查B站真实关系接口。
+    if (OfflineConfig.enabled) {
+      hasLike.value = OfflineLocalInteractions.isLiked(bvid);
+      hasDislike.value = false;
+      // 本地投币记录不存币数只存有无，恢复成2(上限)防止重复投出双倍统计
+      coinNum.value = OfflineLocalInteractions.isCoined(bvid) ? 2 : 0;
+      hasFav.value = OfflineLocalInteractions.isFavorited(bvid);
+      return;
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final result = await VideoHttp.videoRelation(bvid: bvid);
     if (result case Success(:final response)) {
       late final stat = videoDetail.value.stat;
@@ -184,6 +203,38 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
   @override
   Future<void> actionTriple() async {
     feedBack();
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式三连=一次性写三条本地记录，UI乐观更新逻辑与原版一致。
+    if (OfflineConfig.enabled) {
+      if (hasLike.value && hasCoin && hasFav.value) {
+        SmartDialog.showToast('已三连');
+        return;
+      }
+      final stat = videoDetail.value.stat;
+      if (!hasLike.value) {
+        if (!OfflineLocalInteractions.isLiked(bvid)) {
+          OfflineLocalInteractions.toggleLike(bvid);
+        }
+        stat?.like++;
+        hasLike.value = true;
+      }
+      if (!hasCoin) {
+        OfflineLocalInteractions.setCoined(bvid);
+        stat?.coin += 2;
+        coinNum.value = 2;
+      }
+      if (!hasFav.value) {
+        if (!OfflineLocalInteractions.isFavorited(bvid)) {
+          OfflineLocalInteractions.toggleFavorite(bvid);
+        }
+        stat?.favorite++;
+        hasFav.value = true;
+      }
+      hasDislike.value = false;
+      SmartDialog.showToast('三连成功(仅本机)');
+      return;
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     if (!isLogin) {
       SmartDialog.showToast('账号未登录');
       return;
@@ -223,6 +274,18 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
   // （取消）点赞
   @override
   Future<void> actionLikeVideo() async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式没有B站真实登录态，点赞完全本地化，不受 isLogin 限制、不发网络请求。
+    if (OfflineConfig.enabled) {
+      OfflineLocalInteractions.toggleLike(bvid);
+      final newVal = OfflineLocalInteractions.isLiked(bvid);
+      hasLike.value = newVal;
+      videoDetail.value.stat?.like += newVal ? 1 : -1;
+      if (newVal) hasDislike.value = false;
+      SmartDialog.showToast(newVal ? '已点赞(仅本机)' : '取消赞(仅本机)');
+      return;
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     if (!isLogin) {
       SmartDialog.showToast('账号未登录');
       return;
@@ -400,6 +463,18 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     if (videoDetail.owner == null || videoDetail.staff?.isNotEmpty == true) {
       return;
     }
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式：关注状态来自本地记录。attribute=2 是"已关注"的原生取值。
+    if (OfflineConfig.enabled) {
+      followStatus
+        ..value.attribute =
+            OfflineLocalInteractions.isFollowed(videoDetail.owner!.mid!)
+            ? 2
+            : 0
+        ..refresh();
+      return;
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = await UserHttp.userRelation(videoDetail.owner!.mid!);
     if (res case Success(:final response)) {
       if (response.special == 1) response.attribute = -10;
@@ -409,6 +484,21 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
 
   // 关注/取关up
   Future<void> actionRelationMod(BuildContext context) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式：关注只写本地名单。推荐引擎里"关注"是强信号——
+    // 关注UP主的未看视频会在怀旧推荐里获得强制展示名额。
+    if (OfflineConfig.enabled) {
+      // 下面原版代码里有个同名局部变量videoDetail，这里必须显式this.
+      final mid = this.videoDetail.value.owner?.mid;
+      if (mid == null) return;
+      final nowFollowed = OfflineLocalInteractions.toggleFollow(mid);
+      followStatus
+        ..value.attribute = nowFollowed ? 2 : 0
+        ..refresh();
+      SmartDialog.showToast(nowFollowed ? '已关注(仅本机)' : '取消关注(仅本机)');
+      return;
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     if (!isLogin) {
       SmartDialog.showToast('账号未登录');
       return;

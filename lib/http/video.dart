@@ -6,6 +6,12 @@ import 'package:PiliPlus/grpc/bilibili/main/community/reply/v1.pb.dart'
 import 'package:PiliPlus/http/api.dart';
 import 'package:PiliPlus/http/browser_ua.dart';
 import 'package:PiliPlus/http/init.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/http/metadata_offline.dart';
+import 'package:PiliPlus/http/video_offline.dart';
+import 'package:PiliPlus/utils/offline/local_interactions.dart';
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/login.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
@@ -211,6 +217,11 @@ abstract final class VideoHttp {
     String? language,
     bool voiceBalance = false,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    if (OfflineConfig.enabled) {
+      return OfflineVideoHttp.videoUrl(avid: avid, bvid: bvid, cid: cid);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final dmImgStr = Utils.base64EncodeRandomString(16, 64);
     final dmCoverImgStr = Utils.base64EncodeRandomString(32, 128);
     final params = await WbiSign.makSign({
@@ -289,6 +300,11 @@ abstract final class VideoHttp {
   static Future<LoadingState<VideoDetailData>> videoIntro({
     required String bvid,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    if (OfflineConfig.enabled) {
+      return OfflineMetadataHttp.videoIntro(bvid: bvid);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = await Request().get(
       Api.videoIntro,
       queryParameters: {'bvid': bvid},
@@ -319,6 +335,13 @@ abstract final class VideoHttp {
   static Future<LoadingState<List<HotVideoItemModel>?>> relatedVideoList({
     required String bvid,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式：相关视频是B站云端推荐，不发请求，详情页该区块自然为空。
+    // (本地"猜你想看"由怀旧推荐tab承担，不塞进详情页。)
+    if (OfflineConfig.enabled) {
+      return const Success(null);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = await Request().get(
       Api.relatedList,
       queryParameters: {'bvid': bvid},
@@ -547,6 +570,16 @@ abstract final class VideoHttp {
     bool syncToDynamic = false,
     Map<String, int>? atNameToMid,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式下发评论完全不联网，写本地存储；返回 Success(null) 是安全的——
+    // 调用方 lib/pages/common/reply_controller.dart 的 onReply().then() 里
+    // 用 `if (replyInfo is ReplyInfo)` 判断，null 会被直接跳过、不会崩溃，
+    // 代价是自己发的评论要等下次刷新才会出现在列表里，不影响持久化本身。
+    if (OfflineConfig.enabled) {
+      OfflineLocalInteractions.addLocalReply(aid: oid, message: message);
+      return const Success(null);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final data = {
       'type': type,
       'oid': oid,

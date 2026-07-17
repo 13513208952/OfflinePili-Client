@@ -3,6 +3,10 @@ import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/danmaku/post.dart';
 import 'package:PiliPlus/utils/accounts.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/utils/offline/local_interactions.dart';
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:dio/dio.dart';
 
 abstract final class DanmakuHttp {
@@ -25,6 +29,21 @@ abstract final class DanmakuHttp {
     // String? csrf,//CSRF Token（位于 Cookie）	Cookie 方式必要
     // String? access_key,//	APP 登录 Token		APP 方式必要
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式下发弹幕完全不联网，写本地存储后合成一个"成功"结果，
+    // 让调用方(send_danmaku/view.dart)现有的"发送成功后立即在播放器里展示"
+    // 逻辑不用改一行。
+    if (OfflineConfig.enabled) {
+      OfflineLocalInteractions.addLocalDanmaku(
+        cid: oid,
+        content: msg,
+        progressMs: progress ?? 0,
+        mode: mode,
+        color: colorful ? 16777215 : (color ?? 16777215),
+      );
+      return Success(DanmakuPost(dmid: DateTime.now().microsecondsSinceEpoch));
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     // 构建参数对象
     // assert(aid != null || bvid != null);
     // assert(csrf != null || access_key != null);

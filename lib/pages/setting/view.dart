@@ -6,6 +6,7 @@ import 'package:PiliPlus/pages/about/view.dart';
 import 'package:PiliPlus/pages/login/controller.dart';
 import 'package:PiliPlus/pages/setting/common_setting.dart';
 import 'package:PiliPlus/pages/setting/widgets/multi_select_dialog.dart';
+import 'package:PiliPlus/pages/offline_server/view.dart';
 import 'package:PiliPlus/pages/webdav/view.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
@@ -75,6 +76,13 @@ class _SettingPageState extends State<SettingPage> {
       type: SettingType.webdavSetting,
       icon: Icon(MdiIcons.databaseCogOutline),
     ),
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    _SettingsModel(
+      type: SettingType.offlineMode,
+      subtitle: '连接自建局域网服务端，离线浏览归档视频',
+      icon: Icon(Icons.history_edu_outlined),
+    ),
+    // === OFFLINE-NOSTALGIA-MODE END ===
     _SettingsModel(
       type: SettingType.about,
       icon: Icon(Icons.info_outline),
@@ -125,6 +133,11 @@ class _SettingPageState extends State<SettingPage> {
                       .webdavSetting => const WebDavSettingPage(
                         showAppBar: false,
                       ),
+                      // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+                      .offlineMode => const OfflineServerSettingPage(
+                        showAppBar: false,
+                      ),
+                      // === OFFLINE-NOSTALGIA-MODE END ===
                       .about => const AboutPage(showAppBar: false),
                     },
                   ),
@@ -151,6 +164,9 @@ class _SettingPageState extends State<SettingPage> {
           .styleSetting ||
           .extraSetting => CommonSetting(settingType: type),
           .webdavSetting => const WebDavSettingPage(),
+          // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+          .offlineMode => const OfflineServerSettingPage(),
+          // === OFFLINE-NOSTALGIA-MODE END ===
           .about => const AboutPage(),
         },
       );

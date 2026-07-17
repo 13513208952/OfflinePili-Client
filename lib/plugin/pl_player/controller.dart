@@ -41,6 +41,10 @@ import 'package:PiliPlus/utils/extension/box_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/utils/offline/local_interactions.dart';
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -1471,6 +1475,27 @@ class PlPlayerController with BlockConfigMixin {
     }
 
     Future<void> send() {
+      // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+      // 怀旧模式：播放进度心跳绝不发给B站(不泄露归档视频的观看行为)，
+      // 改写进本地观看历史日志——它同时是本地推荐画像的弱信号来源
+      // (完成度≥70%才计入兴趣，见 recommend_engine.dart)。
+      if (OfflineConfig.enabled) {
+        final b = (bvid ?? _bvid)?.toString();
+        final c = cid ?? this.cid;
+        if (b != null && b.isNotEmpty && c is int) {
+          final durationMs = durationInMilliseconds;
+          OfflineLocalInteractions.recordWatch(
+            bvid: b,
+            cid: c,
+            progressMs: progress == -1
+                ? durationMs
+                : progress * 1000,
+            durationMs: durationMs,
+          );
+        }
+        return Future.value();
+      }
+      // === OFFLINE-NOSTALGIA-MODE END ===
       return VideoHttp.heartBeat(
         aid: aid ?? _aid,
         bvid: bvid ?? _bvid,

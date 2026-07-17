@@ -14,6 +14,10 @@ import 'package:PiliPlus/pages/video/introduction/ugc/widgets/triple_mixin.dart'
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/utils/offline/local_interactions.dart';
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -125,6 +129,23 @@ abstract class CommonIntroController extends GetxController
     if (stat == null) {
       return;
     }
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式：投币只写本地记录，不发B站、不扣真实硬币。
+    if (OfflineConfig.enabled) {
+      OfflineLocalInteractions.setCoined(bvid);
+      SmartDialog.showToast('投币成功(仅本机)');
+      coinNum.value += coin;
+      stat.coin += coin;
+      if (coinWithLike && !hasLike.value) {
+        if (!OfflineLocalInteractions.isLiked(bvid)) {
+          OfflineLocalInteractions.toggleLike(bvid);
+        }
+        stat.like++;
+        hasLike.value = true;
+      }
+      return;
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = await VideoHttp.coinVideo(
       bvid: bvid,
       multiply: coin,
@@ -145,6 +166,14 @@ abstract class CommonIntroController extends GetxController
   }
 
   Future<void> queryVideoTags() async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式：标签点击跳的是B站搜索等云端页面，这里不发请求、区块留空。
+    // (服务端目录接口本身带tags字段，推荐引擎用的是那份，不依赖这个UI调用。)
+    if (OfflineConfig.enabled) {
+      videoTags.value = null;
+      return;
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final result = await UserHttp.videoTags(bvid: bvid, cid: cid.value);
     videoTags.value = result.dataOrNull;
   }
@@ -202,6 +231,21 @@ mixin FavMixin on TripleMixin {
 
   // 收藏
   void showFavBottomSheet(BuildContext context, {bool isLongPress = false}) {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式：没有B站收藏夹体系，收藏就是本地单一收藏集的开关，
+    // 点按/长按都直接切换，不弹收藏夹选择面板。
+    // FavMixin 没有 bvid 字段(音频页也混入了这个mixin)，用 getFavRidType
+    // 的 rid(视频=av号)推回bvid做本地存储key，不能强转具体controller。
+    if (OfflineConfig.enabled) {
+      final (rid, _) = getFavRidType;
+      final key = rid is int ? IdUtils.av2bv(rid) : rid.toString();
+      final nowFav = OfflineLocalInteractions.toggleFavorite(key);
+      updateFavCount(nowFav ? 1 : -1);
+      hasFav.value = nowFav;
+      SmartDialog.showToast(nowFav ? '已收藏(仅本机)' : '取消收藏(仅本机)');
+      return;
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     if (!Accounts.main.isLogin) {
       SmartDialog.showToast('账号未登录');
       return;

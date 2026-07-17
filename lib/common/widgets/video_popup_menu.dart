@@ -10,6 +10,10 @@ import 'package:PiliPlus/pages/search/widgets/search_text.dart';
 import 'package:PiliPlus/pages/video/ai_conclusion/view.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/utils/accounts.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/utils/offline/local_interactions.dart';
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -56,11 +60,15 @@ class VideoPopupMenu extends StatelessWidget {
                     const Icon(CustomIcons.identifier_circle, size: 16),
                     () => Utils.copyText(videoItem.bvid!),
                   ),
-                  _VideoCustomAction(
-                    '稍后再看',
-                    const Icon(MdiIcons.clockTimeEightOutline, size: 16),
-                    () => UserHttp.toViewLater(bvid: videoItem.bvid),
-                  ),
+                  // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+                  // "稍后再看"是B站云端账号能力，怀旧模式下隐藏入口
+                  if (!OfflineConfig.enabled)
+                    // === OFFLINE-NOSTALGIA-MODE END ===
+                    _VideoCustomAction(
+                      '稍后再看',
+                      const Icon(MdiIcons.clockTimeEightOutline, size: 16),
+                      () => UserHttp.toViewLater(bvid: videoItem.bvid),
+                    ),
                   if (videoItem.cid != null && Pref.enableAi)
                     _VideoCustomAction(
                       'AI总结',
@@ -100,6 +108,72 @@ class VideoPopupMenu extends StatelessWidget {
                     '不感兴趣',
                     const Icon(MdiIcons.thumbDownOutline, size: 16),
                     () {
+                      // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+                      // 怀旧模式：原因分类弹窗+提交后立即从列表移除的交互原样保留，
+                      // 只是提交目标从B站live API换成本地"不感兴趣"记录——
+                      // 该视频被硬性排除出本地推荐候选，除非手动移除记录。
+                      if (OfflineConfig.enabled) {
+                        final bvid = videoItem.bvid;
+                        if (bvid == null || bvid.isEmpty) {
+                          SmartDialog.showToast('缺少视频ID');
+                          return;
+                        }
+                        showDialog(
+                          context: context,
+                          builder: (context) => SimpleDialog(
+                            contentPadding: const .fromLTRB(24, 16, 24, 24),
+                            children: [
+                              const Text('我不想看(仅本机生效)'),
+                              const SizedBox(height: 5),
+                              Wrap(
+                                spacing: 8.0,
+                                runSpacing: 8.0,
+                                children: [
+                                  '不喜欢这个UP主',
+                                  '不喜欢此类内容',
+                                  '内容质量差',
+                                  '就是不想看这个视频',
+                                ]
+                                    .map(
+                                      (reason) => SearchText(
+                                        text: reason,
+                                        onTap: (_) {
+                                          Get.back();
+                                          OfflineLocalInteractions.addDislike(
+                                            bvid: bvid,
+                                            reason: reason,
+                                          );
+                                          SmartDialog.showToast(
+                                            '已排除出怀旧推荐(仅本机)',
+                                          );
+                                          onRemove?.call();
+                                        },
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                              const Divider(),
+                              Center(
+                                child: FilledButton.tonal(
+                                  onPressed: () {
+                                    OfflineLocalInteractions.removeDislike(
+                                      bvid,
+                                    );
+                                    SmartDialog.showToast('已撤销');
+                                    Get.back();
+                                  },
+                                  style: FilledButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  child: const Text('撤销'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                        return;
+                      }
+                      // === OFFLINE-NOSTALGIA-MODE END ===
                       String? accessKey = Accounts.get(
                         AccountType.recommend,
                       ).accessKey;
@@ -286,6 +360,17 @@ class VideoPopupMenu extends StatelessWidget {
                             TextButton(
                               onPressed: () async {
                                 Get.back();
+                                // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+                                // 怀旧模式：拉黑直接写本地黑名单(blackMids本来就是
+                                // 客户端本地过滤机制)，不发B站关系接口。
+                                if (OfflineConfig.enabled) {
+                                  // setBlackMid 会同时更新 GlobalData 内存镜像并落盘
+                                  Pref.setBlackMid(videoItem.owner.mid!);
+                                  SmartDialog.showToast('已拉黑(仅本机)');
+                                  onRemove?.call();
+                                  return;
+                                }
+                                // === OFFLINE-NOSTALGIA-MODE END ===
                                 final res = await VideoHttp.relationMod(
                                   mid: videoItem.owner.mid!,
                                   act: 5,

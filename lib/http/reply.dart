@@ -11,6 +11,10 @@ import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/http/reply_offline.dart';
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 
 abstract final class ReplyHttp {
   static final Options options = Options(
@@ -26,6 +30,11 @@ abstract final class ReplyHttp {
     required int page,
     int sort = 1,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    if (OfflineConfig.enabled) {
+      return OfflineReplyHttp.replyList(oid: oid);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = !isLogin
         ? await Request().get(
             '${Api.replyList}/main',
@@ -64,6 +73,15 @@ abstract final class ReplyHttp {
     required int type,
     bool isCheck = false,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    if (OfflineConfig.enabled) {
+      return OfflineReplyHttp.replyReplyList(
+        oid: oid,
+        root: root,
+        pageNum: pageNum,
+      );
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = await Request().get(
       Api.replyReplyList,
       queryParameters: {
@@ -94,6 +112,13 @@ abstract final class ReplyHttp {
     required int oid,
     required int rpid,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式：对归档评论的点踩不发B站，本地也不特意留痕(评论是历史快照)，
+    // 直接返回成功让UI乐观更新，重启后回到快照原状。
+    if (OfflineConfig.enabled) {
+      return const Success(null);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = await Request().post(
       Api.hateReply,
       data: {
@@ -119,6 +144,12 @@ abstract final class ReplyHttp {
     required int rpid,
     required int action,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 同 hateReply：不发B站，UI乐观更新即可。
+    if (OfflineConfig.enabled) {
+      return const Success(null);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = await Request().post(
       Api.likeReply,
       data: {

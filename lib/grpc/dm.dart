@@ -1,7 +1,9 @@
 import 'package:PiliPlus/grpc/bilibili/community/service/dm/v1.pb.dart';
 import 'package:PiliPlus/grpc/grpc_req.dart';
 import 'package:PiliPlus/grpc/url.dart';
+import 'package:PiliPlus/http/danmaku_offline.dart';
 import 'package:PiliPlus/http/loading_state.dart';
+import 'package:PiliPlus/utils/offline/offline_config.dart';
 import 'package:fixnum/fixnum.dart';
 
 abstract final class DmGrpc {
@@ -10,6 +12,11 @@ abstract final class DmGrpc {
     required int segmentIndex,
     int type = 1,
   }) {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    if (OfflineConfig.enabled) {
+      return OfflineDanmakuHttp.dmSegMobile(cid: cid);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     return GrpcReq.request(
       GrpcUrl.dmSegMobile,
       DmSegMobileReq(

@@ -611,6 +611,17 @@ abstract final class Pref {
   static String get webdavDirectory =>
       _setting.get(SettingBoxKey.webdavDirectory, defaultValue: '/');
 
+  // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+  static bool get offlineModeEnabled =>
+      _setting.get(SettingBoxKey.offlineModeEnabled, defaultValue: false);
+
+  static String get offlineServerHost =>
+      _setting.get(SettingBoxKey.offlineServerHost, defaultValue: '');
+
+  static int get offlineServerPort =>
+      _setting.get(SettingBoxKey.offlineServerPort, defaultValue: 5299);
+  // === OFFLINE-NOSTALGIA-MODE END ===
+
   static bool get showPgcTimeline =>
       _setting.get(SettingBoxKey.showPgcTimeline, defaultValue: true);
 
@@ -844,11 +855,17 @@ abstract final class Pref {
     defaultValue: AudioOutput.defaultValue,
   );
 
+  // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+  // AI总结/同时在看人数都是B站云端能力，怀旧模式下在Pref闸门层直接关掉，
+  // 所有引用这两个开关的UI入口(详情页AI按钮/卡片菜单AI总结/在线人数轮询)一并消失。
   static bool get enableAi =>
+      !offlineModeEnabled &&
       _setting.get(SettingBoxKey.enableAi, defaultValue: false);
 
   static bool get enableOnlineTotal =>
+      !offlineModeEnabled &&
       _setting.get(SettingBoxKey.enableOnlineTotal, defaultValue: false);
+  // === OFFLINE-NOSTALGIA-MODE END ===
 
   static bool get autoEnterFullScreen =>
       _setting.get(SettingBoxKey.enableAutoEnter, defaultValue: false);

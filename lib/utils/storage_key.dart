@@ -180,6 +180,12 @@ abstract final class SettingBoxKey {
       webdavPassword = 'webdavPassword',
       webdavDirectory = 'webdavDirectory';
 
+  // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+  static const String offlineModeEnabled = 'offlineModeEnabled',
+      offlineServerHost = 'offlineServerHost',
+      offlineServerPort = 'offlineServerPort';
+  // === OFFLINE-NOSTALGIA-MODE END ===
+
   static const String enableSponsorBlock = 'enableSponsorBlock',
       blockSettings = 'blockSettings',
       blockLimit = 'blockLimit',
@@ -245,6 +251,21 @@ abstract final class LocalCacheKey {
       mixinKey = 'mixinKey',
       timeStamp = 'timeStamp',
       buvid = 'buvid';
+
+  // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+  // 单机怀旧模式下"发弹幕/评论/点赞"只写本地，永不上传，key 前缀 offline 区分。
+  static const String offlineLikedBvids = 'offlineLikedBvids',
+      offlineLocalDanmaku = 'offlineLocalDanmaku',
+      offlineLocalReplies = 'offlineLocalReplies',
+      // 三连/关注：仿照 blackMids 的 Set-in-localCache 模式
+      offlineCoinedBvids = 'offlineCoinedBvids',
+      offlineFavoritedBvids = 'offlineFavoritedBvids',
+      offlineFollowedMids = 'offlineFollowedMids',
+      // 视频级"不感兴趣"硬排除: Map<bvid, {reason, at}>
+      offlineDislikedVideos = 'offlineDislikedVideos',
+      // 带时间戳的观看历史日志(watchProgress只存位置没有历史): List<{bvid,cid,at,progressMs,durationMs}>
+      offlineWatchHistory = 'offlineWatchHistory';
+  // === OFFLINE-NOSTALGIA-MODE END ===
 }
 
 abstract final class VideoBoxKey {

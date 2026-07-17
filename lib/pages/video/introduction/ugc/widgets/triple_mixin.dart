@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:PiliPlus/pages/video/pay_coins/view.dart';
 import 'package:PiliPlus/utils/global_data.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,7 +38,12 @@ mixin TripleMixin on GetxController, TickerProvider {
   void onPayCoin(int coin, bool coinWithLike);
 
   void actionCoinVideo() {
-    if (!isLogin) {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 怀旧模式没有真实登录态和硬币余额，跳过这两项检查；
+    // 投币上限的规则照旧，选币弹窗和 onPayCoin 流程原样复用。
+    final offline = OfflineConfig.enabled;
+    // === OFFLINE-NOSTALGIA-MODE END ===
+    if (!offline && !isLogin) {
       SmartDialog.showToast('账号未登录');
       return;
     }
@@ -48,7 +56,7 @@ mixin TripleMixin on GetxController, TickerProvider {
       return;
     }
 
-    if (GlobalData().coins != null && GlobalData().coins! < 1) {
+    if (!offline && GlobalData().coins != null && GlobalData().coins! < 1) {
       SmartDialog.showToast('硬币不足');
       // return;
     }
