@@ -1,3 +1,19 @@
+> **关于本仓库（OfflinePili-Client）**
+>
+> 本仓库是 [PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus) 的派生作品，在其基础上
+> 增加了一个可选的离线模式：开启后，视频、弹幕、评论与元数据改为从自托管的
+> [OfflinePili 服务端](https://github.com/13513208952/OfflinePili) 获取，用于回放个人整理的
+> 本地归档；未开启该模式时行为与上游一致。上游是一个成熟的第三方客户端项目，
+> 本仓库的全部功能性改动都服务于离线模式，不修改上游的主线功能。
+>
+> 逐文件的改动清单见 [`FORK_DIFF.md`](FORK_DIFF.md)。所有对上游文件的修改都包裹在
+> `OFFLINE-NOSTALGIA-MODE BEGIN/END` 注释中。长期分支为 `nostalgia-mode`。
+> 遵循上游的 GPL-3.0 许可证。感谢 PiliPlus 及其所有上游项目的工作。
+>
+> 以下为上游 PiliPlus 的原始说明，原样保留。
+
+---
+
 <div align="center">
     <img width="200" height="200" src="assets/images/logo/logo.png">
 </div>
