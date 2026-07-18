@@ -14,6 +14,7 @@ abstract final class OfflineDanmakuHttp {
     required int cid,
   }) async {
     try {
+      await OfflineConfig.ensureResolved();
       final res = await Request().get(
         OfflineConfig.apiUri('/api/v1/danmaku/$cid').toString(),
         options: Options(responseType: ResponseType.bytes),
@@ -21,6 +22,7 @@ abstract final class OfflineDanmakuHttp {
       final bytes = res.data as List<int>;
       return Success(DmSegMobileReply.fromBuffer(bytes));
     } catch (e) {
+      OfflineConfig.invalidate();
       return Error('单机怀旧模式弹幕获取失败: $e');
     }
   }

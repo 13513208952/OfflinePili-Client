@@ -13,6 +13,7 @@ abstract final class OfflineMetadataHttp {
     required String bvid,
   }) async {
     try {
+      await OfflineConfig.ensureResolved();
       final res = await Request().get(
         OfflineConfig.apiUri('/api/v1/videos/$bvid').toString(),
       );
@@ -23,6 +24,7 @@ abstract final class OfflineMetadataHttp {
       }
       return const Error('单机怀旧模式：该视频不在本地归档目录中');
     } catch (e) {
+      OfflineConfig.invalidate();
       return Error('单机怀旧模式连接失败: $e');
     }
   }

@@ -13,6 +13,7 @@ abstract final class OfflineReplyHttp {
     required int oid,
   }) async {
     try {
+      await OfflineConfig.ensureResolved();
       final res = await Request().get(
         OfflineConfig.apiUri('/api/v1/replies/$oid').toString(),
       );
@@ -21,6 +22,7 @@ abstract final class OfflineReplyHttp {
       }
       return const Error('单机怀旧模式：服务端返回格式异常');
     } catch (e) {
+      OfflineConfig.invalidate();
       return Error('单机怀旧模式评论获取失败: $e');
     }
   }
@@ -38,6 +40,7 @@ abstract final class OfflineReplyHttp {
       return Success(ReplyReplyData(replies: []));
     }
     try {
+      await OfflineConfig.ensureResolved();
       final res = await Request().get(
         OfflineConfig.apiUri('/api/v1/replies/$oid').toString(),
       );

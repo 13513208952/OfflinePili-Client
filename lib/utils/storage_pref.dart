@@ -618,8 +618,15 @@ abstract final class Pref {
   static String get offlineServerHost =>
       _setting.get(SettingBoxKey.offlineServerHost, defaultValue: '');
 
+  static String get offlineServerHostBackup =>
+      _setting.get(SettingBoxKey.offlineServerHostBackup, defaultValue: '');
+
   static int get offlineServerPort =>
       _setting.get(SettingBoxKey.offlineServerPort, defaultValue: 5299);
+
+  // USB直连(adb reverse): 0=禁用 1=优先USB 2=优先网络
+  static int get offlineUsbLinkMode =>
+      _setting.get(SettingBoxKey.offlineUsbLinkMode, defaultValue: 0);
   // === OFFLINE-NOSTALGIA-MODE END ===
 
   static bool get showPgcTimeline =>

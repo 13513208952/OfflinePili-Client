@@ -18,6 +18,7 @@ abstract final class OfflineVideoHttp {
     }
 
     try {
+      await OfflineConfig.ensureResolved();
       final res = await Request().get(
         OfflineConfig.apiUri('/api/v1/videos/$id/playurl').toString(),
       );
@@ -26,6 +27,7 @@ abstract final class OfflineVideoHttp {
       }
       return const Error('单机怀旧模式：服务端返回格式异常');
     } catch (e) {
+      OfflineConfig.invalidate();
       return Error('单机怀旧模式连接失败: $e');
     }
   }

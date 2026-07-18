@@ -29,6 +29,7 @@ abstract final class OfflineCatalogHttp {
     }
 
     try {
+      await OfflineConfig.ensureResolved();
       const pageSize = 200;
       final all = <OfflineVideoItemModel>[];
       for (var page = 1; ; page++) {
@@ -51,6 +52,7 @@ abstract final class OfflineCatalogHttp {
       _cacheAt = DateTime.now();
       return Success(all);
     } catch (e) {
+      OfflineConfig.invalidate(); // 下次请求前重新探测USB/主/备地址
       return Error('单机怀旧模式连接失败: $e');
     }
   }

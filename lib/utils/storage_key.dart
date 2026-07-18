@@ -183,7 +183,11 @@ abstract final class SettingBoxKey {
   // === OFFLINE-NOSTALGIA-MODE BEGIN ===
   static const String offlineModeEnabled = 'offlineModeEnabled',
       offlineServerHost = 'offlineServerHost',
-      offlineServerPort = 'offlineServerPort';
+      // 备用地址：主填内网IP、备填公网IP(或反之)，连接解析器自动选通的那个
+      offlineServerHostBackup = 'offlineServerHostBackup',
+      offlineServerPort = 'offlineServerPort',
+      // USB直连(adb reverse隧道): 0=禁用 1=优先USB 2=优先网络
+      offlineUsbLinkMode = 'offlineUsbLinkMode';
   // === OFFLINE-NOSTALGIA-MODE END ===
 
   static const String enableSponsorBlock = 'enableSponsorBlock',
