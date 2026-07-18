@@ -6,6 +6,7 @@ import 'dart:math';
 
 import 'package:PiliPlus/http/catalog_offline.dart';
 import 'package:PiliPlus/http/loading_state.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 import 'package:PiliPlus/models/offline/offline_video_item.dart';
 import 'package:PiliPlus/pages/common/common_list_controller.dart';
 import 'package:PiliPlus/utils/offline/recommend_engine.dart';
@@ -34,7 +35,14 @@ class OfflineRcmdController
       if (res case Success(:final response)) {
         // 画像/排序全在本地：刷新时重算一次，反馈(点赞/点踩/不感兴趣)
         // 的效果在下一次刷新立即体现。
-        _ranked = OfflineRecommendEngine.rank(response);
+        // 兜底：引擎出任何异常(比如本地存储数据形状损坏)都不能杀死feed，
+        // 降级为原始目录顺序照常展示——真机上曾因Hive类型问题炸过这里。
+        try {
+          _ranked = OfflineRecommendEngine.rank(response);
+        } catch (e) {
+          if (kDebugMode) debugPrint('recommend engine failed: $e');
+          _ranked = response;
+        }
       } else {
         return Error(res is Error ? res.errMsg : '单机怀旧模式：目录加载失败');
       }
