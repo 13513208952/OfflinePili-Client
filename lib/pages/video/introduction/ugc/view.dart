@@ -1,4 +1,7 @@
 import 'package:PiliPlus/common/assets.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/animated_height.dart';
@@ -913,10 +916,14 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                         : null,
                   ),
                 ),
-                Text(
-                  '${NumUtils.numFormat(userStat.follower)}粉丝    ${'${NumUtils.numFormat(userStat.archiveCount)}视频'}',
-                  style: TextStyle(fontSize: 12, color: colorScheme.outline),
-                ),
+                // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+                // 怀旧模式不查粉丝/投稿数(云端数据)，这行隐藏，只保留名字+头像。
+                if (!OfflineConfig.enabled)
+                  Text(
+                    '${NumUtils.numFormat(userStat.follower)}粉丝    ${'${NumUtils.numFormat(userStat.archiveCount)}视频'}',
+                    style: TextStyle(fontSize: 12, color: colorScheme.outline),
+                  ),
+                // === OFFLINE-NOSTALGIA-MODE END ===
               ],
             ),
           ],

@@ -10,6 +10,9 @@ import 'package:PiliPlus/utils/device_utils.dart';
 import 'package:PiliPlus/utils/extension/file_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/permission_handler.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -215,17 +218,31 @@ abstract final class ImageUtils {
     caseSensitive: false,
   );
   static String safeThumbnailUrl(String? src) {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    if (_isOfflineAsset(src)) return src!;
+    // === OFFLINE-NOSTALGIA-MODE END ===
     if (src != null && _suffixRegex.hasMatch(src)) {
       return thumbnailUrl(src);
     }
     return src.http2https;
   }
 
+  // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+  // 怀旧模式下我们服务端的封面/头像是本地http资源(路径含 /api/v1/)，
+  // 既不能被追加 @Nq.webp 缩放后缀(路由不认→404)，也不能被 http2https 强转
+  // (本地无TLS)。命中就原样返回。
+  static bool _isOfflineAsset(String? src) =>
+      OfflineConfig.enabled && src != null && src.contains('/api/v1/');
+  // === OFFLINE-NOSTALGIA-MODE END ===
+
   static final _thumbRegex = RegExp(
     r'(@(\d+[a-z]_?)*)(\..*)?$',
     caseSensitive: false,
   );
   static String thumbnailUrl(String? src, [int maxQuality = 1]) {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    if (_isOfflineAsset(src)) return src!;
+    // === OFFLINE-NOSTALGIA-MODE END ===
     if (src != null && maxQuality != 100) {
       maxQuality = math.max(maxQuality, GlobalData().imgQuality);
       bool hasMatch = false;

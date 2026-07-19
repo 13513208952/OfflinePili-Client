@@ -13,6 +13,10 @@ import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/video/source_type.dart';
 import 'package:PiliPlus/models_new/member_card_info/data.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+// 别名避免与 Flutter Material 的 Card 组件重名
+import 'package:PiliPlus/models_new/member_card_info/card.dart' as mci;
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/models_new/relation/data.dart';
 import 'package:PiliPlus/models_new/video/video_ai_conclusion/model_result.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
@@ -148,8 +152,21 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
   // 获取up主粉丝数
   Future<void> queryUserStat(List<Staff>? staff) async {
     // === OFFLINE-NOSTALGIA-MODE BEGIN ===
-    // 怀旧模式：UP主粉丝数/合作成员关注状态是B站云端数据，不查，区块留空。
-    if (OfflineConfig.enabled) return;
+    // 怀旧模式：粉丝数/投稿数是B站云端数据不查(视频页那行会离线隐藏)，但UP主
+    // 名字+头像要显示——直接用视频详情里的owner构造一张只含名字/头像的卡片。
+    if (OfflineConfig.enabled) {
+      final owner = videoDetail.value.owner;
+      if (owner?.mid != null) {
+        userStat.value = MemberCardInfoData(
+          card: mci.Card(
+            mid: owner!.mid.toString(),
+            name: owner.name,
+            face: owner.face,
+          ),
+        );
+      }
+      return;
+    }
     // === OFFLINE-NOSTALGIA-MODE END ===
     if (staff != null && staff.isNotEmpty) {
       final res = await Request().get(

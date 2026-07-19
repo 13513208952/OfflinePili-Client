@@ -4,6 +4,10 @@ import 'package:PiliPlus/grpc/bilibili/pagination.pb.dart';
 import 'package:PiliPlus/grpc/grpc_req.dart';
 import 'package:PiliPlus/grpc/url.dart';
 import 'package:PiliPlus/http/loading_state.dart';
+// === OFFLINE-NOSTALGIA-MODE BEGIN ===
+import 'package:PiliPlus/http/reply_offline.dart';
+import 'package:PiliPlus/utils/offline/offline_config.dart';
+// === OFFLINE-NOSTALGIA-MODE END ===
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:fixnum/fixnum.dart';
 
@@ -48,6 +52,16 @@ abstract final class ReplyGrpc {
     required String? offset,
     required Int64? cursorNext,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    // 视频页评论区走grpc，离线时改从自建服务端取归档评论并组装成MainListReply。
+    // 归档评论一次性全量给完，翻页(offset非空)直接到底，避免重复。
+    if (OfflineConfig.enabled) {
+      if (offset != null) {
+        return Success(MainListReply()..cursor = (CursorReply()..isEnd = true));
+      }
+      return OfflineReplyHttp.grpcMainList(oid: oid);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = await GrpcReq.request(
       GrpcUrl.mainList,
       MainListReq(
@@ -90,6 +104,14 @@ abstract final class ReplyGrpc {
     required Mode mode,
     required String? offset,
   }) async {
+    // === OFFLINE-NOSTALGIA-MODE BEGIN ===
+    if (OfflineConfig.enabled) {
+      if (offset != null) {
+        return Success(DetailListReply()..cursor = (CursorReply()..isEnd = true));
+      }
+      return OfflineReplyHttp.grpcDetailList(oid: oid, root: root);
+    }
+    // === OFFLINE-NOSTALGIA-MODE END ===
     final res = await GrpcReq.request(
       GrpcUrl.detailList,
       DetailListReq(
