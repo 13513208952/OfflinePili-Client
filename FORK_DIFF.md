@@ -1,12 +1,16 @@
-# FORK_DIFF — 单机怀旧模式 (OFFLINE-NOSTALGIA-MODE)
+# FORK_DIFF — 在线怀旧 + 单机怀旧模式
 
 本 fork 相对上游 PiliPlus 的全部改动清单。所有对上游既有文件的修改都用
 `// === OFFLINE-NOSTALGIA-MODE BEGIN/END ===` 注释包裹，rebase 上游后可用
 `grep -r "OFFLINE-NOSTALGIA-MODE" lib/` 找回全部触点并逐一 review。
 
-设计原则：怀旧模式开启时，视频/弹幕/评论/元数据全部来自自建局域网服务端；
+设计原则：离线归档模式开启时，视频/弹幕/评论/元数据全部来自自建局域网服务端；
 点赞/投币/收藏/关注/弹幕/评论/不感兴趣等互动只写本地 Hive，永不上传；
 观看行为不向B站/第三方发出任何请求。
+
+在线怀旧模式与离线归档模式互斥。在线怀旧只替换首页候选来源：从内置/导入的
+av/BV 白名单中本地调度并向B站验证可用性；视频打开后的详情、播放、弹幕、
+评论、互动和相关推荐全部沿用 PiliPlus 原有在线流程。
 
 ## 新增文件（整文件都是 fork 内容，与上游无冲突）
 
@@ -24,17 +28,28 @@
 | `lib/pages/offline_server/view.dart` | 怀旧模式设置页(开关/host/port/测试连接) |
 | `lib/pages/offline_rcmd/controller.dart` | "怀旧推荐"信息流控制器(继承 CommonListController) |
 | `lib/pages/offline_rcmd/view.dart` | "怀旧推荐"页面(克隆 rcmd/view.dart 网格布局) |
+| `lib/utils/nostalgia/nostalgia_config.dart` | 关闭/在线/离线三个互斥模式的统一门面 |
+| `lib/utils/nostalgia/online_nostalgia_database.dart` | 在线白名单、元数据、验证状态、推荐历史的 SQLite 数据层 |
+| `lib/utils/nostalgia/online_nostalgia_ranker.dart` | 在线候选的画像/质量/MMR 排序 |
+| `lib/http/online_nostalgia.dart` | 复用 B站/PiliPlus 原接口验证元数据与 playurl |
+| `lib/models/online_nostalgia/online_nostalgia_video.dart` | 在线推荐卡片及算法字段模型 |
+| `lib/pages/online_nostalgia/controller.dart` | 75%冷启动探索、动态配比、5%回收及主/备用队列 |
+| `lib/pages/online_nostalgia/view.dart` | 在线怀旧推荐页面 |
+| `test/online_nostalgia_database_test.dart` | ID规范化、导入去重、调度比例及完整内置列表测试 |
+| `av_list.txt` | 默认打包的历史视频白名单（支持设置页继续导入/导出） |
 
 ## 修改的上游文件（均为"顶部加模式分支"式小改动）
 
 | 文件 | 改动原因 |
 |---|---|
-| `lib/utils/storage_key.dart` | 新增怀旧模式的 Setting/LocalCache key 常量 |
-| `lib/utils/storage_pref.dart` | 新增怀旧模式 Pref 存取器；enableAi/enableOnlineTotal 在怀旧模式下强制关(云端能力闸门) |
+| `lib/utils/storage_key.dart` | 新增互斥模式和怀旧模式的 Setting/LocalCache key 常量 |
+| `lib/utils/storage_pref.dart` | 新增互斥模式 Pref 并兼容旧离线布尔键；离线模式继续关闭云端能力 |
 | `lib/models/common/setting_type.dart` | 设置页新增"单机怀旧模式"入口枚举 |
 | `lib/pages/setting/view.dart` | 设置页路由到 OfflineServerSettingPage |
 | `lib/models/common/home_tab_type.dart` | 新增 offlineRcmd("怀旧推荐")tab 枚举(追加在末尾防 tabBarSort 下标错位) |
 | `lib/pages/home/controller.dart` | 怀旧模式下"怀旧推荐"tab 强制置顶+默认落点；关闭时剔除该tab |
+| `lib/common/widgets/video_card/video_card_v.dart` | 在线怀旧卡片点击时额外记录纯本地画像信号，随后仍走原版路由 |
+| `lib/models_new/video/video_detail/data.dart` | 保留 view 接口的 tid/tname，供在线推荐特征使用 |
 | `lib/http/video.dart` | videoUrl/videoIntro/replyAdd/relatedVideoList 怀旧分支(前三个转发到 offline http，相关视频留空) |
 | `lib/http/danmaku.dart` | shootDanmaku 怀旧分支：发弹幕只写本地 |
 | `lib/grpc/dm.dart` | dmSegMobile 怀旧分支：弹幕从服务端取 |

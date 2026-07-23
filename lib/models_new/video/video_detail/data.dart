@@ -21,6 +21,8 @@ class VideoDetailData {
   String? desc;
   List<DescV2>? descV2;
   int? duration;
+  int? tid;
+  String? tname;
   Rights? rights;
   Owner? owner;
   VideoStat? stat;
@@ -47,6 +49,8 @@ class VideoDetailData {
     this.desc,
     this.descV2,
     this.duration,
+    this.tid,
+    this.tname,
     this.rights,
     this.owner,
     this.stat,
@@ -76,6 +80,8 @@ class VideoDetailData {
             ?.map((e) => DescV2.fromJson(e as Map<String, dynamic>))
             .toList(),
         duration: json['duration'] as int?,
+        tid: json['tid'] as int?,
+        tname: json['tname'] as String?,
         rights: json['rights'] == null
             ? null
             : Rights.fromJson(json['rights'] as Map<String, dynamic>),

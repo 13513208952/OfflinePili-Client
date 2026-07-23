@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
@@ -8,12 +10,14 @@ import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
 import 'package:PiliPlus/models/home/rcmd/result.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
+import 'package:PiliPlus/models/online_nostalgia/online_nostalgia_video.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension/dimension_ext.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliPlus/utils/nostalgia/online_nostalgia_database.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +36,12 @@ class VideoCardV extends StatelessWidget {
   });
 
   Future<void> onPushDetail() async {
+    // === ONLINE-NOSTALGIA-MODE BEGIN ===
+    // 不改变PiliPlus打开视频的流程，只额外记录本机推荐画像的点击信号。
+    if (videoItem case OnlineNostalgiaVideo(:final aid?)) {
+      unawaited(OnlineNostalgiaDatabase.recordClick(aid));
+    }
+    // === ONLINE-NOSTALGIA-MODE END ===
     switch (videoItem.goto) {
       case 'bangumi':
         PageUtils.viewPgc(epId: videoItem.param!);

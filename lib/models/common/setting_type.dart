@@ -15,7 +15,7 @@ enum SettingType {
   extraSetting('其它设置'),
   webdavSetting('WebDAV 设置'),
   // === OFFLINE-NOSTALGIA-MODE BEGIN ===
-  offlineMode('单机怀旧模式'),
+  offlineMode('怀旧模式'),
   // === OFFLINE-NOSTALGIA-MODE END ===
   about('关于'),
   ;

@@ -1,10 +1,16 @@
 > **关于本仓库（OfflinePili-Client）**
 >
 > 本仓库是 [PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus) 的派生作品，在其基础上
-> 增加了一个可选的离线模式：开启后，视频、弹幕、评论与元数据改为从自托管的
-> [OfflinePili 服务端](https://github.com/13513208952/OfflinePili) 获取，用于回放个人整理的
-> 本地归档；未开启该模式时行为与上游一致。上游是一个成熟的第三方客户端项目，
-> 本仓库的全部功能性改动都服务于离线模式，不修改上游的主线功能。
+> 增加了两种互斥的怀旧模式：
+>
+> - 在线怀旧：使用内置或用户导入的历史 av/BV 白名单和客户端本地算法生成推荐，
+>   视频、弹幕、评论与全部互动仍由 B站/PiliPlus 原有流程提供；
+> - 离线归档：视频、弹幕、评论与元数据改为从自托管的
+>   [OfflinePili 服务端](https://github.com/13513208952/OfflinePili) 获取，用于回放个人整理的
+>   本地归档，互动仅写本机。
+>
+> 关闭怀旧模式时行为与上游一致。上游是一个成熟的第三方客户端项目，
+> 本仓库的功能性改动不改变上游正常模式的主线能力。
 >
 > 逐文件的改动清单见 [`FORK_DIFF.md`](FORK_DIFF.md)。所有对上游文件的修改都包裹在
 > `OFFLINE-NOSTALGIA-MODE BEGIN/END` 注释中。长期分支为 `nostalgia-mode`。

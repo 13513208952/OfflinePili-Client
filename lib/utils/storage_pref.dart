@@ -612,8 +612,20 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.webdavDirectory, defaultValue: '/');
 
   // === OFFLINE-NOSTALGIA-MODE BEGIN ===
-  static bool get offlineModeEnabled =>
-      _setting.get(SettingBoxKey.offlineModeEnabled, defaultValue: false);
+  static bool get offlineModeEnabled => nostalgiaMode == 2;
+
+  /// 0=关闭，1=在线怀旧（B站资源），2=离线归档（OfflinePili）。
+  /// 没有新键时兼容旧版 offlineModeEnabled 布尔设置。
+  static int get nostalgiaMode {
+    final value = _setting.get(SettingBoxKey.nostalgiaMode);
+    if (value is int && value >= 0 && value <= 2) return value;
+    return _setting.get(
+          SettingBoxKey.offlineModeEnabled,
+          defaultValue: false,
+        )
+        ? 2
+        : 0;
+  }
 
   static String get offlineServerHost =>
       _setting.get(SettingBoxKey.offlineServerHost, defaultValue: '');

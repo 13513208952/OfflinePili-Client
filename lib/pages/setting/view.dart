@@ -79,7 +79,7 @@ class _SettingPageState extends State<SettingPage> {
     // === OFFLINE-NOSTALGIA-MODE BEGIN ===
     _SettingsModel(
       type: SettingType.offlineMode,
-      subtitle: '连接自建局域网服务端，离线浏览归档视频',
+      subtitle: '在线历史推荐或连接 OfflinePili 离线归档',
       icon: Icon(Icons.history_edu_outlined),
     ),
     // === OFFLINE-NOSTALGIA-MODE END ===

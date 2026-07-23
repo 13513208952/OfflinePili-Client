@@ -12,8 +12,11 @@ import 'package:PiliPlus/pages/rank/view.dart';
 import 'package:PiliPlus/pages/offline_rcmd/controller.dart';
 import 'package:PiliPlus/pages/offline_rcmd/view.dart';
 // === OFFLINE-NOSTALGIA-MODE END ===
+import 'package:PiliPlus/pages/online_nostalgia/controller.dart';
+import 'package:PiliPlus/pages/online_nostalgia/view.dart';
 import 'package:PiliPlus/pages/rcmd/controller.dart';
 import 'package:PiliPlus/pages/rcmd/view.dart';
+import 'package:PiliPlus/utils/nostalgia/nostalgia_config.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -42,7 +45,10 @@ enum HomeTabType implements EnumWithLabel {
     HomeTabType.bangumi ||
     HomeTabType.cinema => () => Get.find<PgcController>(tag: name),
     // === OFFLINE-NOSTALGIA-MODE BEGIN ===
-    HomeTabType.offlineRcmd => Get.find<OfflineRcmdController>,
+    HomeTabType.offlineRcmd =>
+      NostalgiaConfig.online
+          ? Get.find<OnlineNostalgiaController>
+          : Get.find<OfflineRcmdController>,
     // === OFFLINE-NOSTALGIA-MODE END ===
   };
 
@@ -54,7 +60,10 @@ enum HomeTabType implements EnumWithLabel {
     HomeTabType.bangumi => const PgcPage(tabType: HomeTabType.bangumi),
     HomeTabType.cinema => const PgcPage(tabType: HomeTabType.cinema),
     // === OFFLINE-NOSTALGIA-MODE BEGIN ===
-    HomeTabType.offlineRcmd => const OfflineRcmdPage(),
+    HomeTabType.offlineRcmd =>
+      NostalgiaConfig.online
+          ? const OnlineNostalgiaPage()
+          : const OfflineRcmdPage(),
     // === OFFLINE-NOSTALGIA-MODE END ===
   };
 }

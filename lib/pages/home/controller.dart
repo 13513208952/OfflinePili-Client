@@ -7,9 +7,7 @@ import 'package:PiliPlus/models/common/home_tab_type.dart';
 import 'package:PiliPlus/pages/common/common_controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/services/account_service.dart';
-// === OFFLINE-NOSTALGIA-MODE BEGIN ===
-import 'package:PiliPlus/utils/offline/offline_config.dart';
-// === OFFLINE-NOSTALGIA-MODE END ===
+import 'package:PiliPlus/utils/nostalgia/nostalgia_config.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
@@ -78,19 +76,17 @@ class HomeController extends GetxController
     // === OFFLINE-NOSTALGIA-MODE BEGIN ===
     // 怀旧模式开启时"怀旧推荐"tab强制置顶(不管用户保存的tab排序里有没有它)、
     // 默认落在它上面；关闭时把它从列表剔除，不显示连不上服务端的空tab。
-    if (OfflineConfig.enabled) {
+    if (NostalgiaConfig.enabled) {
       this.tabs = [
         HomeTabType.offlineRcmd,
         ...this.tabs.where((t) => t != HomeTabType.offlineRcmd),
       ];
     } else {
-      this.tabs = this.tabs
-          .where((t) => t != HomeTabType.offlineRcmd)
-          .toList();
+      this.tabs = this.tabs.where((t) => t != HomeTabType.offlineRcmd).toList();
     }
 
     tabController = TabController(
-      initialIndex: OfflineConfig.enabled
+      initialIndex: NostalgiaConfig.enabled
           ? 0
           : max(0, this.tabs.indexOf(HomeTabType.rcmd)),
       length: this.tabs.length,

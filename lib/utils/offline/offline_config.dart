@@ -1,5 +1,6 @@
 // === OFFLINE-NOSTALGIA-MODE BEGIN ===
 import 'package:PiliPlus/http/init.dart';
+import 'package:PiliPlus/utils/nostalgia/nostalgia_config.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:dio/dio.dart' show Options;
 
@@ -11,7 +12,7 @@ import 'package:dio/dio.dart' show Options;
 //   - 主地址/备用地址: 内网IP和公网IP各填一个，在家走内网、在外走公网
 // 探测结果缓存60秒；任何一次请求连不上时调 invalidate() 触发下次重新探测。
 abstract final class OfflineConfig {
-  static bool get enabled => Pref.offlineModeEnabled;
+  static bool get enabled => NostalgiaConfig.offline;
 
   static String? _activeBase;
   static DateTime? _resolvedAt;
@@ -89,4 +90,5 @@ abstract final class OfflineConfig {
     );
   }
 }
+
 // === OFFLINE-NOSTALGIA-MODE END ===

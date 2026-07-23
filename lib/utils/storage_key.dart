@@ -181,13 +181,15 @@ abstract final class SettingBoxKey {
       webdavDirectory = 'webdavDirectory';
 
   // === OFFLINE-NOSTALGIA-MODE BEGIN ===
-  static const String offlineModeEnabled = 'offlineModeEnabled',
-      offlineServerHost = 'offlineServerHost',
-      // 备用地址：主填内网IP、备填公网IP(或反之)，连接解析器自动选通的那个
-      offlineServerHostBackup = 'offlineServerHostBackup',
-      offlineServerPort = 'offlineServerPort',
-      // USB直连(adb reverse隧道): 0=禁用 1=优先USB 2=优先网络
-      offlineUsbLinkMode = 'offlineUsbLinkMode';
+  static const String offlineModeEnabled = 'offlineModeEnabled';
+  // 0=关闭 1=在线怀旧 2=离线归档。offlineModeEnabled 保留用于旧版本迁移。
+  static const String nostalgiaMode = 'nostalgiaMode';
+  static const String offlineServerHost = 'offlineServerHost';
+  // 备用地址：主填内网IP、备填公网IP(或反之)，连接解析器自动选通的那个
+  static const String offlineServerHostBackup = 'offlineServerHostBackup';
+  static const String offlineServerPort = 'offlineServerPort';
+  // USB直连(adb reverse隧道): 0=禁用 1=优先USB 2=优先网络
+  static const String offlineUsbLinkMode = 'offlineUsbLinkMode';
   // === OFFLINE-NOSTALGIA-MODE END ===
 
   static const String enableSponsorBlock = 'enableSponsorBlock',
@@ -258,17 +260,17 @@ abstract final class LocalCacheKey {
 
   // === OFFLINE-NOSTALGIA-MODE BEGIN ===
   // 单机怀旧模式下"发弹幕/评论/点赞"只写本地，永不上传，key 前缀 offline 区分。
-  static const String offlineLikedBvids = 'offlineLikedBvids',
-      offlineLocalDanmaku = 'offlineLocalDanmaku',
-      offlineLocalReplies = 'offlineLocalReplies',
-      // 三连/关注：仿照 blackMids 的 Set-in-localCache 模式
-      offlineCoinedBvids = 'offlineCoinedBvids',
-      offlineFavoritedBvids = 'offlineFavoritedBvids',
-      offlineFollowedMids = 'offlineFollowedMids',
-      // 视频级"不感兴趣"硬排除: Map<bvid, {reason, at}>
-      offlineDislikedVideos = 'offlineDislikedVideos',
-      // 带时间戳的观看历史日志(watchProgress只存位置没有历史): List<{bvid,cid,at,progressMs,durationMs}>
-      offlineWatchHistory = 'offlineWatchHistory';
+  static const String offlineLikedBvids = 'offlineLikedBvids';
+  static const String offlineLocalDanmaku = 'offlineLocalDanmaku';
+  static const String offlineLocalReplies = 'offlineLocalReplies';
+  // 三连/关注：仿照 blackMids 的 Set-in-localCache 模式
+  static const String offlineCoinedBvids = 'offlineCoinedBvids';
+  static const String offlineFavoritedBvids = 'offlineFavoritedBvids';
+  static const String offlineFollowedMids = 'offlineFollowedMids';
+  // 视频级"不感兴趣"硬排除: Map<bvid, {reason, at}>
+  static const String offlineDislikedVideos = 'offlineDislikedVideos';
+  // 带时间戳的观看历史日志(watchProgress只存位置没有历史)
+  static const String offlineWatchHistory = 'offlineWatchHistory';
   // === OFFLINE-NOSTALGIA-MODE END ===
 }
 
