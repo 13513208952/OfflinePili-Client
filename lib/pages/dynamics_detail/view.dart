@@ -154,15 +154,14 @@ class _DynamicDetailPageState
       try {
         for (final e in richTextNodes) {
           if (e.type == 'RICH_TEXT_NODE_TYPE_EMOJI') {
-            const placeHolder = '\uFFFC';
             items.add(
               RichTextItem(
-                text: placeHolder,
+                text: Style.placeHolder,
                 rawText: e.origText,
                 type: .emoji,
                 range: TextRange(
                   start: buffer.length,
-                  end: buffer.length + placeHolder.length,
+                  end: buffer.length + Style.placeHolder.length,
                 ),
                 emote: Emote(
                   url: e.emoji!.url!,
@@ -170,7 +169,7 @@ class _DynamicDetailPageState
                 ),
               ),
             );
-            buffer.write(placeHolder);
+            buffer.write(Style.placeHolder);
             continue;
           }
           final range = TextRange(
@@ -506,7 +505,7 @@ class _DynamicDetailPageState
     } else {
       child = _buildHorizontal(padding);
     }
-    return fabAnimWrapper(child);
+    return fabAnimWrapper(child: child);
   }
 
   Widget _buildBottom() {

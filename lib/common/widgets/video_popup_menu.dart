@@ -1,7 +1,6 @@
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
-import 'package:PiliPlus/models/common/account_type.dart';
 import 'package:PiliPlus/models/home/rcmd/result.dart';
 import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/models_new/space/space_archive/item.dart';
@@ -62,7 +61,7 @@ class VideoPopupMenu extends StatelessWidget {
                   ),
                   // === OFFLINE-NOSTALGIA-MODE BEGIN ===
                   // "稍后再看"是B站云端账号能力，怀旧模式下隐藏入口
-                  if (!OfflineConfig.enabled)
+                  if (!OfflineConfig.enabled && Accounts.main.isLogin)
                     // === OFFLINE-NOSTALGIA-MODE END ===
                     _VideoCustomAction(
                       '稍后再看',
@@ -128,29 +127,30 @@ class VideoPopupMenu extends StatelessWidget {
                               Wrap(
                                 spacing: 8.0,
                                 runSpacing: 8.0,
-                                children: [
-                                  '不喜欢这个UP主',
-                                  '不喜欢此类内容',
-                                  '内容质量差',
-                                  '就是不想看这个视频',
-                                ]
-                                    .map(
-                                      (reason) => SearchText(
-                                        text: reason,
-                                        onTap: (_) {
-                                          Get.back();
-                                          OfflineLocalInteractions.addDislike(
-                                            bvid: bvid,
-                                            reason: reason,
-                                          );
-                                          SmartDialog.showToast(
-                                            '已排除出怀旧推荐(仅本机)',
-                                          );
-                                          onRemove?.call();
-                                        },
-                                      ),
-                                    )
-                                    .toList(),
+                                children:
+                                    [
+                                          '不喜欢这个UP主',
+                                          '不喜欢此类内容',
+                                          '内容质量差',
+                                          '就是不想看这个视频',
+                                        ]
+                                        .map(
+                                          (reason) => SearchText(
+                                            text: reason,
+                                            onTap: (_) {
+                                              Get.back();
+                                              OfflineLocalInteractions.addDislike(
+                                                bvid: bvid,
+                                                reason: reason,
+                                              );
+                                              SmartDialog.showToast(
+                                                '已排除出怀旧推荐(仅本机)',
+                                              );
+                                              onRemove?.call();
+                                            },
+                                          ),
+                                        )
+                                        .toList(),
                               ),
                               const Divider(),
                               Center(
@@ -174,11 +174,11 @@ class VideoPopupMenu extends StatelessWidget {
                         return;
                       }
                       // === OFFLINE-NOSTALGIA-MODE END ===
-                      String? accessKey = Accounts.get(
-                        AccountType.recommend,
-                      ).accessKey;
-                      if (accessKey == null || accessKey == "") {
-                        SmartDialog.showToast("请退出账号后重新登录");
+                      final rcmd = Accounts.get(.recommend);
+                      if (rcmd.accessKey == null || rcmd.accessKey == "") {
+                        SmartDialog.showToast(
+                          rcmd.isLogin ? '请退出账号后重新登录' : '账号未登录',
+                        );
                         return;
                       }
                       if (videoItem case final RcmdVideoItemAppModel item) {
