@@ -73,9 +73,23 @@ class OnlineNostalgiaController
   }
 
   Future<void> _ensureMain(int minimum) async {
-    if (_main.length >= minimum) return;
-    await _refill(initialOnly: _main.isEmpty && _reserve.isEmpty);
     _moveReserveToMain();
+    if (_main.length >= minimum) return;
+    if (_refillFuture == null) {
+      unawaited(
+        _refill(initialOnly: _main.isEmpty && _reserve.isEmpty),
+      );
+    }
+    // 后台会继续补满200个备用项；前台只等够下一页，不等待整个补池任务。
+    while (_main.length < minimum) {
+      final refill = _refillFuture;
+      if (refill == null) return;
+      await Future.any([
+        refill,
+        Future<void>.delayed(_validationBatchInterval),
+      ]);
+      _moveReserveToMain();
+    }
   }
 
   Future<void> _refill({bool initialOnly = false}) {
@@ -102,8 +116,9 @@ class OnlineNostalgiaController
         ..._reserve.map((e) => e.aid!),
       };
       // 冷启动只验证首屏；首屏返回后在后台分轮填满完整备用池。
+      // 每20个即排序入队，让前台不必等待120或220个全部验证完成。
       final need = (target - _main.length - _reserve.length)
-          .clamp(20, 120)
+          .clamp(1, pageSize)
           .toInt();
       final ids = await OnlineNostalgiaDatabase.selectForValidation(
         count: need,
