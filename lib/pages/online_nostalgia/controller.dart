@@ -18,8 +18,9 @@ class OnlineNostalgiaController
         > {
   static const pageSize = 20;
   static const _mainTarget = 20;
-  static const _reserveTarget = 40;
+  static const _reserveTarget = 200;
   static const _validationConcurrency = 3;
+  static const _validationBatchInterval = Duration(milliseconds: 100);
 
   final _main = <OnlineNostalgiaVideo>[];
   final _reserve = <OnlineNostalgiaVideo>[];
@@ -73,69 +74,77 @@ class OnlineNostalgiaController
 
   Future<void> _ensureMain(int minimum) async {
     if (_main.length >= minimum) return;
-    await _refill();
+    await _refill(initialOnly: _main.isEmpty && _reserve.isEmpty);
     _moveReserveToMain();
   }
 
-  Future<void> _refill() {
-    return _refillFuture ??= _doRefill().whenComplete(() {
-      _refillFuture = null;
-    });
+  Future<void> _refill({bool initialOnly = false}) {
+    return _refillFuture ??= _doRefill(initialOnly: initialOnly).whenComplete(
+      () {
+        _refillFuture = null;
+      },
+    );
   }
 
-  Future<void> _doRefill() async {
+  Future<void> _doRefill({required bool initialOnly}) async {
     if (_reserve.length >= _reserveTarget && _main.length >= _mainTarget) {
       return;
     }
-    final excluded = {
-      ..._inFlight,
-      ..._main.map((e) => e.aid!),
-      ..._reserve.map((e) => e.aid!),
-    };
-    // 冷启动先验证一小批，尽快显示首屏；首屏返回后再后台填满备用队列。
-    final coldStart = _main.isEmpty && _reserve.isEmpty;
-    final need =
-        (coldStart
-                ? _mainTarget
-                : _mainTarget + _reserveTarget - _main.length - _reserve.length)
-            .clamp(20, 120)
-            .toInt();
-    final ids = await OnlineNostalgiaDatabase.selectForValidation(
-      count: need,
-      excluded: excluded,
-      sessionId: _sessionId,
-    );
-    if (ids.isEmpty) return;
+    final attempted = <int>{};
+    final target = initialOnly ? _mainTarget : _mainTarget + _reserveTarget;
 
-    final cached = await OnlineNostalgiaDatabase.loadVideos(ids);
-    final cachedByAid = {for (final item in cached) item.aid!: item};
-    // 每次进入主/备用队列前都确认playurl。复用项沿用已缓存元数据，
-    // 未知与不可用回收项才重新获取完整元数据和标签。
-    for (var i = 0; i < ids.length; i += _validationConcurrency) {
-      final end = (i + _validationConcurrency).clamp(0, ids.length).toInt();
-      final batch = ids.sublist(i, end);
-      _inFlight.addAll(batch);
-      await Future.wait(
-        batch.map(
-          (aid) => OnlineNostalgiaHttp.validate(
-            aid,
-            cached: cachedByAid[aid],
-          ),
-        ),
+    while (_main.length + _reserve.length < target) {
+      final excluded = {
+        ..._sessionSeen,
+        ...attempted,
+        ..._inFlight,
+        ..._main.map((e) => e.aid!),
+        ..._reserve.map((e) => e.aid!),
+      };
+      // 冷启动只验证首屏；首屏返回后在后台分轮填满完整备用池。
+      final need = (target - _main.length - _reserve.length)
+          .clamp(20, 120)
+          .toInt();
+      final ids = await OnlineNostalgiaDatabase.selectForValidation(
+        count: need,
+        excluded: excluded,
+        sessionId: _sessionId,
       );
-      _inFlight.removeAll(batch);
-      if (end < ids.length) {
-        await Future<void>.delayed(const Duration(milliseconds: 250));
+      if (ids.isEmpty) return;
+      attempted.addAll(ids);
+
+      final cached = await OnlineNostalgiaDatabase.loadVideos(ids);
+      final cachedByAid = {for (final item in cached) item.aid!: item};
+      // 每次进入主/备用队列前都确认playurl。复用项沿用已缓存元数据，
+      // 未知与不可用回收项才重新获取完整元数据和标签。
+      for (var i = 0; i < ids.length; i += _validationConcurrency) {
+        final end = (i + _validationConcurrency).clamp(0, ids.length).toInt();
+        final batch = ids.sublist(i, end);
+        _inFlight.addAll(batch);
+        await Future.wait(
+          batch.map(
+            (aid) => OnlineNostalgiaHttp.validate(
+              aid,
+              cached: cachedByAid[aid],
+            ),
+          ),
+        );
+        _inFlight.removeAll(batch);
+        if (end < ids.length) {
+          await Future<void>.delayed(_validationBatchInterval);
+        }
       }
+      final validated = await OnlineNostalgiaDatabase.loadVideos(ids);
+      final profile = await OnlineNostalgiaDatabase.preferenceProfile();
+      final ranked = OnlineNostalgiaRanker.rank(
+        validated,
+        profile,
+      ).where((e) => !excluded.contains(e.aid)).toList();
+      _reserve.addAll(ranked);
+      _moveReserveToMain();
+
+      if (initialOnly) return;
     }
-    final validated = await OnlineNostalgiaDatabase.loadVideos(ids);
-    final profile = await OnlineNostalgiaDatabase.preferenceProfile();
-    final ranked = OnlineNostalgiaRanker.rank(
-      validated,
-      profile,
-    ).where((e) => !excluded.contains(e.aid)).toList();
-    _reserve.addAll(ranked);
-    _moveReserveToMain();
   }
 
   void _moveReserveToMain() {

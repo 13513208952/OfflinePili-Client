@@ -4,6 +4,7 @@ import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/nostalgia/online_nostalgia_database.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqlite3/sqlite3.dart';
 
 void main() {
   late Directory testDirectory;
@@ -52,7 +53,7 @@ void main() {
     expect(stats.unknown, 2);
   });
 
-  test('cold pool uses 75% exploration and at most 5% recycling', () async {
+  test('cold pool uses 75% exploration and cooled 5% recycling', () async {
     final source = [
       for (var aid = 1000; aid < 1100; aid++) 'av$aid',
     ].join('\n');
@@ -87,10 +88,25 @@ void main() {
       );
     }
 
-    final selected = await OnlineNostalgiaDatabase.selectForValidation(
+    var selected = await OnlineNostalgiaDatabase.selectForValidation(
       count: 20,
       excluded: const {},
       sessionId: 1,
+    );
+    expect(selected.where((aid) => aid >= 1030), hasLength(16));
+    expect(selected.where((aid) => aid >= 1000 && aid < 1020), hasLength(4));
+    expect(selected.where((aid) => aid >= 1020 && aid < 1030), isEmpty);
+
+    sqlite3.open(OnlineNostalgiaDatabase.path)
+      ..execute(
+        'UPDATE nostalgia_videos SET retry_at=0 '
+        'WHERE aid >= 1020 AND aid < 1030',
+      )
+      ..close();
+    selected = await OnlineNostalgiaDatabase.selectForValidation(
+      count: 20,
+      excluded: const {},
+      sessionId: 2,
     );
     expect(selected.where((aid) => aid >= 1030), hasLength(15));
     expect(selected.where((aid) => aid >= 1000 && aid < 1020), hasLength(4));

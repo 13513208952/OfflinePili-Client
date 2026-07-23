@@ -300,6 +300,7 @@ abstract final class OnlineNostalgiaDatabase {
     final availableCount = reuseCount - recycleCount;
     final ids = <int>[];
     final excludedList = excluded.toList();
+    final now = DateTime.now().millisecondsSinceEpoch;
 
     void addRows(String where, int limit, String order) {
       if (limit <= 0) return;
@@ -325,7 +326,7 @@ abstract final class OnlineNostalgiaDatabase {
     );
     reuseCount -= ids.length - beforeAvailable;
     addRows(
-      'availability_status=2',
+      'availability_status=2 AND retry_at <= $now',
       recycleCount,
       'checked_at ASC, failure_count ASC, random_key',
     );
