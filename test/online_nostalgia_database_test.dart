@@ -113,6 +113,25 @@ void main() {
     expect(selected.where((aid) => aid >= 1020 && aid < 1030), hasLength(1));
   });
 
+  test('concurrent validation writes are serialized', () async {
+    await OnlineNostalgiaDatabase.importText(
+      [for (var aid = 2000; aid < 2030; aid++) 'av$aid'].join('\n'),
+      sourceName: 'concurrency-test',
+    );
+
+    await Future.wait([
+      for (var aid = 2000; aid < 2030; aid++)
+        OnlineNostalgiaDatabase.saveFailure(
+          aid,
+          reason: 'concurrent-test',
+          permanent: false,
+        ),
+    ]);
+
+    final stats = await OnlineNostalgiaDatabase.stats();
+    expect(stats.unavailable, 30);
+  });
+
   test('bundled allowlist imports without invalid or duplicate IDs', () async {
     final text = await File('av_list.txt').readAsString();
     final result = await OnlineNostalgiaDatabase.importText(

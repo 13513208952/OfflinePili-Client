@@ -8,6 +8,7 @@ import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
+import 'package:synchronized/synchronized.dart';
 
 typedef ImportSummary = ({
   int total,
@@ -24,6 +25,8 @@ typedef PoolStats = ({
 });
 
 abstract final class OnlineNostalgiaDatabase {
+  static final _operationLock = Lock();
+
   static String get path =>
       p.join(appSupportDirPath, 'online_nostalgia.sqlite3');
 
@@ -31,15 +34,19 @@ abstract final class OnlineNostalgiaDatabase {
     // appSupportDirPath 是主 isolate 初始化的 late final；必须在切换 isolate
     // 之前解析成普通字符串并随消息传入。
     final dbPath = path;
-    return Isolate.run(() => operation(dbPath));
+    // 网络验证可以并发，但SQLite连接初始化和写事务必须短暂串行，
+    // 避免多个isolate同时切换WAL/更新状态时触发SQLITE_BUSY。
+    return _operationLock.synchronized(
+      () => Isolate.run(() => operation(dbPath)),
+    );
   }
 
   static Database _open(String dbPath) {
     final db = sqlite3.open(dbPath);
+    db.execute('PRAGMA busy_timeout=15000');
     db.execute('PRAGMA journal_mode=WAL');
     db.execute('PRAGMA synchronous=NORMAL');
     db.execute('PRAGMA foreign_keys=ON');
-    db.execute('PRAGMA busy_timeout=5000');
     db.execute('''
       CREATE TABLE IF NOT EXISTS nostalgia_videos (
         aid INTEGER PRIMARY KEY,
