@@ -132,15 +132,19 @@ void main() {
     expect(stats.unavailable, 30);
   });
 
-  test('bundled allowlist imports without invalid or duplicate IDs', () async {
+  test('bundled allowlist imports and exports without losing IDs', () async {
     final text = await File('av_list.txt').readAsString();
+    final ids = text.split('\n');
+    expect(ids.length, greaterThan(100000));
     final result = await OnlineNostalgiaDatabase.importText(
       text,
       sourceName: 'bundled-test',
     );
-    expect(result.added, 19163);
+    expect(result.added, ids.length);
     expect(result.duplicate, 0);
     expect(result.invalid, 0);
-    expect((await OnlineNostalgiaDatabase.stats()).total, 19163);
+    expect((await OnlineNostalgiaDatabase.stats()).total, ids.length);
+    final exported = await OnlineNostalgiaDatabase.exportText();
+    expect(exported, '$text\n');
   });
 }

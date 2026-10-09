@@ -1,6 +1,6 @@
 // === OFFLINE-NOSTALGIA-MODE BEGIN ===
 // 单机怀旧模式配置页，照抄 lib/pages/webdav/view.dart 的结构。
-import 'dart:io';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:PiliPlus/common/style.dart';
@@ -105,18 +105,16 @@ class _OfflineServerSettingPageState extends State<OfflineServerSettingPage> {
   Future<void> _exportList() async {
     setState(() => _listBusy = true);
     try {
+      // Android's document picker returns a content URI, not a writable File
+      // path. Give the picker the actual bytes so its SAF writer persists them.
+      final text = await OnlineNostalgiaDatabase.exportText();
       final outputPath = await FilePicker.saveFile(
         dialogTitle: '导出在线怀旧列表',
         fileName: 'av_list.txt',
-        type: FileType.custom,
-        allowedExtensions: const ['txt'],
-        bytes: Uint8List(0),
+        mimeType: 'text/plain',
+        bytes: Uint8List.fromList(utf8.encode(text)),
       );
       if (outputPath == null) return;
-      await File(outputPath).writeAsString(
-        await OnlineNostalgiaDatabase.exportText(),
-        flush: true,
-      );
       SmartDialog.showToast('已导出');
     } catch (e) {
       SmartDialog.showToast('导出失败：$e');

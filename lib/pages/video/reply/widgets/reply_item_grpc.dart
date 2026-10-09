@@ -33,6 +33,7 @@ import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/bili_utils.dart';
 import 'package:PiliPlus/utils/color_utils.dart';
 import 'package:PiliPlus/utils/danmaku_utils.dart';
+import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
@@ -222,12 +223,25 @@ class ReplyItemGrpc extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      ' • ${replyItem.replyControl.location}',
+                      replyLevel <= 1
+                          ? DateFormatUtils.format(
+                              replyItem.ctime.toInt(),
+                              format: DateFormatUtils.longFormatDs,
+                            )
+                          : DateFormatUtils.dateFormat(replyItem.ctime.toInt()),
                       style: TextStyle(
                         fontSize: 11,
                         color: colorScheme.outline,
                       ),
                     ),
+                    if (replyItem.replyControl.hasLocation())
+                      Text(
+                        ' • ${replyItem.replyControl.location}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colorScheme.outline,
+                        ),
+                      ),
                   ],
                 ),
               ],

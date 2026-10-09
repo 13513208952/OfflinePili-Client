@@ -1,0 +1,96 @@
+import java.io.File
+import java.nio.file.Files
+import java.security.MessageDigest
+
+group 'com.alexmercerind.media_kit_libs_android_video'
+version '1.0'
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.3.0'
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    // Conditional for compatibility with AGP <4.2.
+    if (project.android.hasProperty("namespace")) {
+        namespace 'com.alexmercerind.media_kit_libs_android_video'
+    }
+
+    compileSdkVersion 31
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        minSdkVersion 16
+    }
+
+    dependencies {
+        implementation fileTree(dir: "$buildDir/output", include: "*.jar")
+    }
+}
+
+task downloadDependencies(type: Exec) {
+        // Delete previously created /output subdirectory.
+
+        def outputDir = file("$buildDir/output")
+        if (outputDir.exists()) {
+            outputDir.deleteDir()
+        }
+        outputDir.mkdirs()
+
+        // Pinned to the SHA-256 values published in GitHub's vnext release
+        // asset list on 2026-10-08. Fail closed if that mutable tag changes.
+        def filesToDownload = [
+            ["url": "https://github.com/bggRGjQaUbCoE/libmpv-android-video-build/releases/download/vnext/default-arm64-v8a.jar", "sha256": "2c67bc2ebd4d831a6dddf683aee8e7e3da8088a188b3f0185e0a758c8caeff1e", "destination": file("$buildDir/v1.1.6/default-arm64-v8a.jar")],
+            ["url": "https://github.com/bggRGjQaUbCoE/libmpv-android-video-build/releases/download/vnext/default-armeabi-v7a.jar", "sha256": "2ba89da4fb3f208ea6228f0499e7cb7b535bb73b59f6dd86a0ab32498fe42984", "destination": file("$buildDir/v1.1.6/default-armeabi-v7a.jar")],
+            ["url": "https://github.com/bggRGjQaUbCoE/libmpv-android-video-build/releases/download/vnext/default-x86_64.jar", "sha256": "40a9864988f1bd48301366b2a103c72d7220c13b88d9148e339727369b4758df", "destination": file("$buildDir/v1.1.6/default-x86_64.jar")],
+        ]
+
+        filesToDownload.each { fileInfo ->
+            def destFile = fileInfo.destination
+            def hasExpectedDigest = { f ->
+                MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(f.toPath())).encodeHex().toString() == fileInfo.sha256
+            }
+            if (destFile.exists() && !hasExpectedDigest(destFile)) {
+                destFile.delete()
+                println "SHA-256 mismatch. File deleted: ${destFile}"
+            }
+
+            if (!destFile.exists()) {
+                destFile.parentFile.mkdirs()
+                println "Downloading file from: ${fileInfo.url}"
+                destFile.withOutputStream { os ->
+                    os << new URL(fileInfo.url).openStream()
+                }
+                if (!hasExpectedDigest(destFile)) {
+                    destFile.delete()
+                    throw new GradleException("SHA-256 verification failed for ${destFile}")
+                }
+            }
+
+            copy {
+                from destFile
+                into outputDir
+            }
+        }
+}
+
+assemble.dependsOn(downloadDependencies)
