@@ -9,6 +9,7 @@ import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/hero.dart';
 import 'package:PiliPlus/common/widgets/progress_bar/audio_video_progress_bar.dart';
 import 'package:PiliPlus/common/widgets/progress_bar/segment_progress_bar.dart';
+import 'package:PiliPlus/common/widgets/scaffold/simple_scaffold.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart'
     show platformClampingPhysics;
 import 'package:PiliPlus/common/widgets/selection_text.dart';
@@ -38,10 +39,10 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:flutter/material.dart' hide DraggableScrollableSheet;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:material_ui/material_ui.dart' hide DraggableScrollableSheet;
 
 class AudioPage extends StatefulWidget {
   const AudioPage({super.key});
@@ -96,8 +97,7 @@ class _AudioPageState extends State<AudioPage> {
     final colorScheme = ColorScheme.of(context);
     final isPortrait = MediaQuery.sizeOf(context).isPortrait;
     final padding = MediaQuery.viewPaddingOf(context);
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
+    return SimpleScaffold(
       appBar: AppBar(
         actions: [
           if (_controller.isUgc && _controller.enableSponsorBlock)
@@ -209,8 +209,7 @@ class _AudioPageState extends State<AudioPage> {
           maxWidth: min(640, context.mediaQueryShortestSide),
         ),
         builder: (context) {
-          final theme = Theme.of(context);
-          final colorScheme = theme.colorScheme;
+          final colorScheme = ColorScheme.of(context);
           Widget child = CustomScrollView(
             controller: scrollController,
             physics: _controller.reachStart
@@ -237,7 +236,6 @@ class _AudioPageState extends State<AudioPage> {
                         initiallyExpanded: isCurr,
                         collapsedIconColor: isCurr ? colorScheme.primary : null,
                         iconColor: isCurr ? null : colorScheme.onSurfaceVariant,
-                        controlAffinity: ListTileControlAffinity.leading,
                         title: Text(
                           item.arc.title,
                           maxLines: 1,
@@ -418,11 +416,8 @@ class _AudioPageState extends State<AudioPage> {
                 ),
                 Expanded(
                   child: Material(
-                    type: MaterialType.transparency,
-                    child: Theme(
-                      data: theme.copyWith(dividerColor: Colors.transparent),
-                      child: child,
-                    ),
+                    type: .transparency,
+                    child: child,
                   ),
                 ),
                 Divider(
@@ -759,8 +754,8 @@ class _AudioPageState extends State<AudioPage> {
 
   void _onDragStart(ThumbDragDetails details) {
     _controller
-      ..isDragging = true
-      ..position.value = details.seconds;
+      ..position.value = details.seconds
+      ..isDragging = true;
   }
 
   void _onDragUpdate(ThumbDragDetails details) {
@@ -770,7 +765,7 @@ class _AudioPageState extends State<AudioPage> {
   void _onSeek(int milliseconds) {
     _controller
       ..isDragging = false
-      ..player?.seek(Duration(milliseconds: milliseconds));
+      ..onSeek(Duration(milliseconds: milliseconds));
   }
 
   Widget _buildProgressBar(ColorScheme colorScheme) {
@@ -918,9 +913,10 @@ class _AudioPageState extends State<AudioPage> {
             Expanded(
               child: Center(
                 child: ListView(
-                  key: const PageStorageKey(_AudioPageState),
+                  padding: .zero,
                   shrinkWrap: true,
                   physics: platformClampingPhysics,
+                  key: const PageStorageKey(_AudioPageState),
                   children: [
                     Center(
                       child: GestureDetector(

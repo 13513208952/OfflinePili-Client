@@ -7,13 +7,13 @@ import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/dialog/report.dart';
-import 'package:PiliPlus/common/widgets/emote_span.dart';
-import 'package:PiliPlus/common/widgets/flutter/text/text.dart' as custom_text;
+import 'package:PiliPlus/common/widgets/emote_tooltip.dart';
 import 'package:PiliPlus/common/widgets/gesture/tap_gesture_recognizer.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/image_grid/image_grid_view.dart';
 import 'package:PiliPlus/common/widgets/pendant_avatar.dart';
-import 'package:PiliPlus/common/widgets/selection_text.dart';
+import 'package:PiliPlus/common/widgets/text_ellipsis/text_ellipsis.dart';
+import 'package:PiliPlus/common/widgets/text_more/text_more.dart';
 import 'package:PiliPlus/common/widgets/translucent_row.dart';
 import 'package:PiliPlus/grpc/bilibili/main/community/reply/v1.pb.dart'
     show ReplyInfo, ReplyControl, Content, Url, ReplyControl_VoteOption, Emote;
@@ -21,8 +21,6 @@ import 'package:PiliPlus/grpc/reply.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/reply.dart';
 import 'package:PiliPlus/http/video.dart';
-import 'package:PiliPlus/models/common/badge_type.dart';
-import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/vote.dart';
 import 'package:PiliPlus/pages/member/widget/medal_widget.dart';
 import 'package:PiliPlus/pages/save_panel/view.dart';
@@ -39,6 +37,7 @@ import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/selectable_region_ext.dart';
+import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/global_data.dart';
@@ -48,15 +47,16 @@ import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/url_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:protobuf/protobuf.dart';
 
 part 'package:PiliPlus/common/widgets/context_menu/reply_menu_helper.dart';
@@ -168,13 +168,14 @@ class ReplyItemGrpc extends StatelessWidget {
                 ? member.garbPendantImage
                 : null,
           ),
-          Expanded(
+          Flexible(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: .min,
+              crossAxisAlignment: .start,
               children: [
                 Row(
                   spacing: 6,
+                  mainAxisSize: .min,
                   children: [
                     Flexible(
                       child: Text(
@@ -197,7 +198,7 @@ class ReplyItemGrpc extends StatelessWidget {
                     if (replyItem.mid == upMid)
                       const PBadge(
                         text: 'UP',
-                        size: PBadgeSize.small,
+                        size: .small,
                         isStack: false,
                         fontSize: 9,
                       )
@@ -212,15 +213,12 @@ class ReplyItemGrpc extends StatelessWidget {
                         nameColor: DmUtils.decimalToColor(
                           member.fansMedalColorName.toInt(),
                         ),
-                        padding: const .symmetric(
-                          horizontal: 6,
-                          vertical: 1.5,
-                        ),
+                        padding: const .symmetric(horizontal: 6, vertical: 1.5),
                       ),
                   ],
                 ),
                 Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: .min,
                   children: [
                     Text(
                       replyLevel <= 1
@@ -343,7 +341,7 @@ class ReplyItemGrpc extends StatelessWidget {
           ),
         Padding(
           padding: padding,
-          child: custom_text.Text.rich(
+          child: TextMore.rich(
             primary: colorScheme.primary,
             style: const TextStyle(height: 1.75, fontSize: 14),
             maxLines: replyLevel == 1 ? replyLengthLimit : null,
@@ -351,12 +349,12 @@ class ReplyItemGrpc extends StatelessWidget {
               children: [
                 if (replyControl.isUpTop) ...[
                   const WidgetSpan(
-                    alignment: PlaceholderAlignment.middle,
+                    alignment: .middle,
                     child: PBadge(
                       text: 'TOP',
-                      size: PBadgeSize.small,
+                      size: .small,
                       isStack: false,
-                      type: PBadgeType.line_primary,
+                      type: .line_primary,
                       fontSize: 9,
                       textScaleFactor: 1,
                     ),
@@ -569,30 +567,32 @@ class ReplyItemGrpc extends StatelessWidget {
     List<ReplyInfo> replies,
   ) {
     final extraRow = replies.length < replyItem.count.toInt();
-    late final length = replies.length + (extraRow ? 1 : 0);
+    final length = replies.length + (extraRow ? 1 : 0);
     return Padding(
-      padding: const EdgeInsets.only(left: 42, right: 4),
+      padding: const .only(left: 42, right: 4),
       child: Material(
+        animationDuration: .zero,
         color: colorScheme.onInverseSurface,
-        borderRadius: const BorderRadius.all(Radius.circular(6)),
-        clipBehavior: Clip.hardEdge,
-        animationDuration: Duration.zero,
+        borderRadius: const .all(.circular(6)),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: .stretch,
           children: [
             if (replies.isNotEmpty)
-              ...List.generate(replies.length, (index) {
-                final childReply = replies[index];
-                EdgeInsets padding;
+              ...replies.mapIndexed((index, childReply) {
+                final EdgeInsets padding;
+                BorderRadius? borderRadius;
                 if (length == 1) {
-                  padding = const EdgeInsets.fromLTRB(8, 5, 8, 5);
+                  padding = const .fromLTRB(8, 5, 8, 5);
+                  borderRadius = const .all(.circular(6));
                 } else {
                   if (index == 0) {
-                    padding = const EdgeInsets.fromLTRB(8, 8, 8, 4);
+                    padding = const .fromLTRB(8, 8, 8, 4);
+                    borderRadius = const .vertical(top: .circular(6));
                   } else if (index == length - 1) {
-                    padding = const EdgeInsets.fromLTRB(8, 4, 8, 8);
+                    padding = const .fromLTRB(8, 4, 8, 8);
+                    borderRadius = const .vertical(bottom: .circular(6));
                   } else {
-                    padding = const EdgeInsets.fromLTRB(8, 4, 8, 4);
+                    padding = const .fromLTRB(8, 4, 8, 4);
                   }
                 }
                 void showMore() => showModalBottomSheet(
@@ -612,13 +612,14 @@ class ReplyItemGrpc extends StatelessWidget {
                   },
                 );
                 return InkWell(
+                  borderRadius: borderRadius,
                   onTap: () =>
                       replyReply?.call(replyItem, childReply.id.toInt()),
                   onLongPress: showMore,
                   onSecondaryTap: PlatformUtils.isMobile ? null : showMore,
                   child: Padding(
                     padding: padding,
-                    child: Text.rich(
+                    child: TextEllipsis.rich(
                       style: TextStyle(
                         height: 1.6,
                         fontSize: 14,
@@ -642,10 +643,10 @@ class ReplyItemGrpc extends StatelessWidget {
                           if (childReply.mid == upMid) ...[
                             const TextSpan(text: ' '),
                             const WidgetSpan(
-                              alignment: PlaceholderAlignment.middle,
+                              alignment: .middle,
                               child: PBadge(
                                 text: 'UP',
-                                size: PBadgeSize.small,
+                                size: .small,
                                 isStack: false,
                                 fontSize: 9,
                                 textScaleFactor: 1,
@@ -675,10 +676,13 @@ class ReplyItemGrpc extends StatelessWidget {
             if (extraRow)
               InkWell(
                 onTap: () => replyReply?.call(replyItem, null),
+                borderRadius: length == 1
+                    ? const .all(.circular(6))
+                    : const .vertical(bottom: .circular(6)),
                 child: Padding(
                   padding: length == 1
-                      ? const EdgeInsets.fromLTRB(8, 6, 8, 6)
-                      : const EdgeInsets.fromLTRB(8, 5, 8, 8),
+                      ? const .fromLTRB(8, 6, 8, 6)
+                      : const .fromLTRB(8, 5, 8, 8),
                   child: Text.rich(
                     TextSpan(
                       style: const TextStyle(fontSize: 12),
@@ -818,22 +822,30 @@ class ReplyItemGrpc extends StatelessWidget {
       onMatch: (Match match) {
         String matchStr = match[0]!;
         late final name = matchStr.substring(1);
-        late final topic = matchStr.substring(1, matchStr.length - 1);
+        late final topic = matchStr.substring1;
         if (content.emotes.containsKey(matchStr)) {
           // 处理表情
           final emote = content.emotes[matchStr]!;
           final size = emote.size.toInt() * 20.0;
+          final url = emote.hasWebpUrl()
+              ? emote.webpUrl
+              : emote.hasGifUrl()
+              ? emote.gifUrl
+              : emote.url;
           spanChildren.add(
             WidgetSpan(
-              child: NetworkImgLayer(
-                src: emote.hasWebpUrl()
-                    ? emote.webpUrl
-                    : emote.hasGifUrl()
-                    ? emote.gifUrl
-                    : emote.url,
-                type: ImageType.emote,
-                width: size,
-                height: size,
+              child: emoteTooltipBuilder(
+                url: url,
+                emote: matchStr,
+                triggerMode: .tap,
+                jumpUrl: emote.hasJumpUrl() ? emote.jumpUrl : null,
+                colorScheme: colorScheme,
+                child: NetworkImgLayer(
+                  src: url,
+                  type: .emote,
+                  width: size,
+                  height: size,
+                ),
               ),
             ),
           );
@@ -1134,17 +1146,43 @@ class ReplyItemGrpc extends StatelessWidget {
               leading: Icon(Icons.delete_outlined, color: errorColor, size: 19),
               title: Text('删除', style: style.copyWith(color: errorColor)),
             ),
-          if (ownerMid != Int64.ZERO)
+          if (ownerMid == Int64.ZERO)
             ListTile(
               onTap: () {
                 Get.back();
+                Pref.setBlackMid(item.mid.toInt());
+                onDelete();
+                SmartDialog.showToast('屏蔽成功');
+                return;
+              },
+              minLeadingWidth: 0,
+              leading: Icon(Icons.error_outline, color: errorColor, size: 19),
+              title: Text(
+                '屏蔽',
+                style: TextStyle(fontSize: 14, color: errorColor),
+              ),
+            )
+          else
+            ListTile(
+              onTap: () {
+                Get.back();
+
+                final oid = item.oid;
+                final rpid = item.id;
+
                 autoWrapReportDialog(
                   context,
+                  onRemove: onDelete,
+                  mid: () => item.mid.toInt(),
                   ReportOptions.commentReport,
+                  withContent: ReportOptions.withContentReply,
+                  contentRequired: ReportOptions.contentRequiredReply,
+                  reportUrl:
+                      'https://www.bilibili.com/h5/comment/report?oid=$oid&pageType=${item.type}&rpid=$rpid&platform=android&build=8430300&${ThemeUtils.themeUrl(colorScheme.isDark)}',
                   (reasonType, reasonDesc, banUid) async {
                     final res = await ReplyHttp.report(
-                      rpid: item.id,
-                      oid: item.oid,
+                      rpid: rpid,
+                      oid: oid,
                       reasonType: reasonType,
                       reasonDesc: reasonDesc,
                       banUid: banUid,

@@ -44,11 +44,11 @@ import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:material_ui/material_ui.dart';
 
 class UgcIntroPanel extends StatefulWidget {
   const UgcIntroPanel({
@@ -144,7 +144,7 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                     ..._infos(videoDetail)
                   else
                     Obx(
-                      () => AnimatedHeight(
+                      () => AnimatedHeightWidgetExt(
                         expand: introController.expand.value,
                         duration: const Duration(milliseconds: 300),
                         child: TranslucentColumn(
@@ -185,26 +185,21 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                   ],
                   // 合集
                   if (!isLoading &&
-                      videoDetail.ugcSeason != null &&
                       (isPortrait ||
                           !videoDetailCtr
                               .plPlayerController
-                              .horizontalSeasonPanel))
-                    Obx(
-                      () => SeasonPanel(
-                        key: ValueKey(introController.videoDetail.value),
-                        heroTag: widget.heroTag,
-                        showEpisodes: widget.showEpisodes,
-                        ugcIntroController: introController,
+                              .horizontalSeasonPanel)) ...[
+                    if (videoDetail.hasSeason)
+                      Obx(
+                        () => SeasonPanel(
+                          key: ValueKey(introController.videoDetail.value),
+                          heroTag: widget.heroTag,
+                          showEpisodes: widget.showEpisodes,
+                          ugcIntroController: introController,
+                        ),
                       ),
-                    ),
-                  if (!isLoading &&
-                      videoDetail.pages != null &&
-                      videoDetail.pages!.length > 1 &&
-                      (isPortrait ||
-                          !videoDetailCtr
-                              .plPlayerController
-                              .horizontalSeasonPanel))
+                  ],
+                  if (videoDetail.hasParts)
                     Obx(
                       () => PagesPanel(
                         key: ValueKey(introController.videoDetail.value),
@@ -408,7 +403,7 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
             ),
             const TextSpan(text: ' '),
           ],
-          TextSpan(text: videoDetail.title ?? ''),
+          TextSpan(text: videoDetail.title),
         ],
       );
       if (isSelectable) {
@@ -715,7 +710,7 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: .horizontal,
-              hitTestBehavior: .deferToChild,
+              hitTestBehavior: .translucent,
               physics: ReloadScrollPhysics(controller: introController),
               child: Row(
                 spacing: 25,
@@ -828,8 +823,8 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                     if (introController.staffRelations['status'] == true &&
                         introController.staffRelations['${item.mid}'] == null) {
                       return Material(
-                        type: .transparency,
-                        shape: const CircleBorder(),
+                        type: .circle,
+                        color: colorScheme.secondaryContainer,
                         child: InkWell(
                           customBorder: const CircleBorder(),
                           onTap: () => RequestUtils.actionRelationMod(
@@ -840,12 +835,8 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                                 introController.staffRelations['${item.mid}'] =
                                     true,
                           ),
-                          child: Ink(
+                          child: Padding(
                             padding: const .all(2),
-                            decoration: BoxDecoration(
-                              color: colorScheme.secondaryContainer,
-                              shape: .circle,
-                            ),
                             child: Icon(
                               MdiIcons.plus,
                               size: 16,

@@ -17,8 +17,8 @@ import 'package:PiliPlus/pages/online_nostalgia/view.dart';
 import 'package:PiliPlus/pages/rcmd/controller.dart';
 import 'package:PiliPlus/pages/rcmd/view.dart';
 import 'package:PiliPlus/utils/nostalgia/nostalgia_config.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:material_ui/material_ui.dart';
 
 enum HomeTabType implements EnumWithLabel {
   live('直播'),

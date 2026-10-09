@@ -8,6 +8,7 @@ import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/reply_offline.dart';
 import 'package:PiliPlus/utils/offline/offline_config.dart';
 // === OFFLINE-NOSTALGIA-MODE END ===
+import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:fixnum/fixnum.dart';
 
@@ -41,7 +42,8 @@ abstract final class ReplyGrpc {
   }
 
   static bool needRemoveGrpc(ReplyInfo reply) {
-    return (enableFilter && replyRegExp.hasMatch(reply.content.message)) ||
+    return GlobalData().blackMids.contains(reply.mid.toInt()) ||
+        (enableFilter && replyRegExp.hasMatch(reply.content.message)) ||
         (antiGoodsReply && needRemoveGoodGrpc(reply));
   }
 
@@ -68,12 +70,12 @@ abstract final class ReplyGrpc {
         oid: Int64(oid),
         type: Int64(type),
         rpid: Int64.ZERO,
-        // cursor: CursorReq(
-        //   mode: mode,
-        //   next: cursorNext,
-        // ),
-        mode: mode,
-        pagination: offset == null ? null : FeedPagination(offset: offset),
+        cursor: CursorReq(
+          mode: mode,
+          next: cursorNext,
+        ),
+        // mode: mode,
+        // pagination: offset == null ? null : FeedPagination(offset: offset),
       ),
       MainListReply.fromBuffer,
     );

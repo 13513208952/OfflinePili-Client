@@ -1,6 +1,7 @@
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/dialog/export_import.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
+import 'package:PiliPlus/common/widgets/scaffold/simple_scaffold.dart';
 import 'package:PiliPlus/common/widgets/view_sliver_safe_area.dart';
 import 'package:PiliPlus/grpc/bilibili/main/community/reply/v1.pb.dart'
     show ReplyInfo;
@@ -14,9 +15,9 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/waterfall.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
-import 'package:waterfall_flow/waterfall_flow.dart';
+import 'package:material_ui/material_ui.dart';
 
 class MyReply extends StatefulWidget {
   const MyReply({super.key});
@@ -42,8 +43,7 @@ class _MyReplyState extends State<MyReply> with DynMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
+    return SimpleScaffold(
       appBar: AppBar(
         title: const Text('我的评论'),
         actions: [
@@ -79,7 +79,8 @@ class _MyReplyState extends State<MyReply> with DynMixin {
         slivers: [
           _replies.isNotEmpty
               ? ViewSliverSafeArea(
-                  sliver: SliverWaterfallFlow(
+                  sliver: SliverMasonryGrid(
+                    crossAxisSpacing: 4,
                     gridDelegate: dynGridDelegate,
                     delegate: SliverChildBuilderDelegate(
                       childCount: _replies.length,
