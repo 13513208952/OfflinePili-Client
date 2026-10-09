@@ -166,7 +166,16 @@ class _OfflineServerSettingPageState extends State<OfflineServerSettingPage> {
     final showAppBar = widget.showAppBar;
     final padding = MediaQuery.viewPaddingOf(context);
     return Scaffold(
-      appBar: showAppBar ? AppBar(title: const Text('怀旧模式')) : null,
+      appBar: showAppBar
+          ? AppBar(
+              leading: IconButton(
+                tooltip: '返回',
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: const Text('怀旧模式'),
+            )
+          : null,
       body: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -182,12 +191,17 @@ class _OfflineServerSettingPageState extends State<OfflineServerSettingPage> {
                 decoration: const InputDecoration(
                   labelText: '怀旧模式',
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                  contentPadding: EdgeInsets.fromLTRB(12, 20, 12, 12),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: _mode,
                     isExpanded: true,
+                    selectedItemBuilder: (context) => const [
+                      Text('关闭'),
+                      Text('在线怀旧'),
+                      Text('离线归档'),
+                    ],
                     items: const [
                       DropdownMenuItem(
                         value: 0,
