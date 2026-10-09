@@ -1,6 +1,7 @@
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
+import 'package:PiliPlus/models/common/video/video_quality.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/online_nostalgia/online_nostalgia_video.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
@@ -127,6 +128,7 @@ abstract final class OnlineNostalgiaHttp {
       avid: aid,
       bvid: bvid,
       cid: cid,
+      qn: VideoQuality.hdrVivid.code,
       epid: pgc != null && !isSeason ? id : null,
       seasonId: isSeason ? id : null,
       tryLook: true,

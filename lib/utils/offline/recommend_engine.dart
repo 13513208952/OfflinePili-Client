@@ -195,7 +195,7 @@ abstract final class OfflineRecommendEngine {
       if (v.bvid != null && OfflineLocalInteractions.isDisliked(v.bvid!)) {
         return false;
       }
-      if (RecommendFilter.filter(v)) return false;
+      if (RecommendFilter.filterWithExempt(v)) return false;
       return true;
     }).toList();
     if (candidates.isEmpty) return const [];
